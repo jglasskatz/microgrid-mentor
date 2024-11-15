@@ -1,7 +1,7 @@
 import { ComponentInstance } from "./components";
 
 const GRID_SIZE = 20;
-const components: ComponentInstance[] = [];
+let components: ComponentInstance[] = [];
 
 export function drawGrid(
   ctx: CanvasRenderingContext2D,
@@ -28,6 +28,7 @@ export function drawGrid(
 }
 
 export function drawComponents(ctx: CanvasRenderingContext2D) {
+  ctx.save();
   components.forEach((component) => {
     const color = getComponentColor(component.type);
     
@@ -53,6 +54,7 @@ export function drawComponents(ctx: CanvasRenderingContext2D) {
       }
     });
   });
+  ctx.restore();
 }
 
 export function handleDrop(
@@ -61,8 +63,11 @@ export function handleDrop(
   canvas: HTMLCanvasElement
 ): boolean {
   const rect = canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  
+  const x = (e.clientX - rect.left) * scaleX;
+  const y = (e.clientY - rect.top) * scaleY;
 
   // Snap to grid
   const snappedX = Math.round(x / GRID_SIZE) * GRID_SIZE;
@@ -70,7 +75,7 @@ export function handleDrop(
 
   // Check if position is already occupied
   const isOccupied = components.some(
-    (c) => c.x === snappedX && c.y === snappedY
+    (c) => Math.abs(c.x - snappedX) < GRID_SIZE && Math.abs(c.y - snappedY) < GRID_SIZE
   );
   
   if (isOccupied) {
@@ -86,7 +91,7 @@ export function handleDrop(
     specs: {},
   };
 
-  components.push(newComponent);
+  components = [...components, newComponent];
   
   const ctx = canvas.getContext("2d");
   if (ctx) {

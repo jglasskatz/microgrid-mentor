@@ -44,7 +44,7 @@ export default function AICoach() {
 
   return (
     <div className="h-full flex flex-col p-4">
-      <h2 className="text-lg font-semibold mb-4">AI Coach</h2>
+      <h2 className="text-lg font-semibold mb-4">Design Coach</h2>
       
       <ScrollArea className="flex-1 pr-4">
         <div className="space-y-4">
