@@ -9,10 +9,16 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
+import { ComponentInstance } from "@/lib/components";
 
 export default function Whiteboard() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
+  const [components, setComponents] = useState<ComponentInstance[]>([]);
+
+  const handleComponentAdd = (component: ComponentInstance) => {
+    setComponents(prev => [...prev, component]);
+  };
 
   return (
     <div className="h-screen w-screen flex flex-col">
@@ -30,7 +36,12 @@ export default function Whiteboard() {
         <ResizableHandle />
         
         <ResizablePanel defaultSize={55}>
-          <Canvas ref={canvasRef} selectedComponent={selectedComponent} />
+          <Canvas 
+            ref={canvasRef} 
+            selectedComponent={selectedComponent}
+            components={components}
+            onComponentAdd={handleComponentAdd}
+          />
         </ResizablePanel>
         
         <ResizableHandle />

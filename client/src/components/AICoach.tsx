@@ -2,11 +2,12 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import useSWRMutation from "swr/mutation";
 
 interface Message {
-  role: "user" | "assistant";
+  role: "user" | "assistant" | "error";
   content: string;
 }
 
@@ -16,6 +17,12 @@ async function sendMessage(url: string, { arg }: { arg: string }) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ message: arg }),
   });
+  
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.details || error.error || "Failed to get response");
+  }
+  
   return res.json();
 }
 
@@ -38,7 +45,13 @@ export default function AICoach() {
         { role: "assistant", content: response.message },
       ]);
     } catch (error) {
-      console.error("Failed to get AI response:", error);
+      setMessages((prev) => [
+        ...prev,
+        { 
+          role: "error", 
+          content: error.message || "Failed to get AI response"
+        },
+      ]);
     }
   };
 
@@ -49,16 +62,25 @@ export default function AICoach() {
       <ScrollArea className="flex-1 pr-4">
         <div className="space-y-4">
           {messages.map((msg, i) => (
-            <div
-              key={i}
-              className={`p-3 rounded-lg ${
-                msg.role === "user"
-                  ? "bg-primary text-primary-foreground ml-8"
-                  : "bg-muted mr-8"
-              }`}
-            >
-              {msg.content}
-            </div>
+            msg.role === "error" ? (
+              <Alert variant="destructive" key={i}>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {msg.content}
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <div
+                key={i}
+                className={`p-3 rounded-lg ${
+                  msg.role === "user"
+                    ? "bg-primary text-primary-foreground ml-8"
+                    : "bg-muted mr-8"
+                }`}
+              >
+                {msg.content}
+              </div>
+            )
           ))}
         </div>
       </ScrollArea>

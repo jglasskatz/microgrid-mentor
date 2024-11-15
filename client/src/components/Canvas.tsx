@@ -1,13 +1,16 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import { drawGrid, drawComponents, handleDrop } from "@/lib/canvas-utils";
 import { useToast } from "@/hooks/use-toast";
+import { ComponentInstance } from "@/lib/components";
 
 interface CanvasProps {
   selectedComponent: string | null;
+  components: ComponentInstance[];
+  onComponentAdd: (component: ComponentInstance) => void;
 }
 
 const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
-  ({ selectedComponent }, ref) => {
+  ({ selectedComponent, components, onComponentAdd }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const { toast } = useToast();
     
@@ -24,7 +27,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         canvas.width = canvas.offsetWidth;
         canvas.height = canvas.offsetHeight;
         drawGrid(ctx, canvas.width, canvas.height);
-        drawComponents(ctx);
+        drawComponents(ctx, components);
       };
 
       resizeCanvas();
@@ -37,8 +40,9 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       canvas.addEventListener("drop", (e) => {
         e.preventDefault();
         if (selectedComponent) {
-          const success = handleDrop(e, selectedComponent, canvas);
-          if (success) {
+          const newComponent = handleDrop(e, selectedComponent, canvas);
+          if (newComponent) {
+            onComponentAdd(newComponent);
             toast({
               title: "Component Added",
               description: `Added ${selectedComponent} to the canvas`,
@@ -50,7 +54,19 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       return () => {
         window.removeEventListener("resize", resizeCanvas);
       };
-    }, [selectedComponent, toast]);
+    }, [selectedComponent, components, onComponentAdd, toast]);
+
+    // Re-render when components change
+    useEffect(() => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      drawGrid(ctx, canvas.width, canvas.height);
+      drawComponents(ctx, components);
+    }, [components]);
 
     return (
       <canvas

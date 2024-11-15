@@ -29,6 +29,27 @@ Provide specific, technical responses that help users make informed decisions.`
     res.json({ message: response.choices[0].message.content });
   } catch (error) {
     console.error("AI Coach error:", error);
-    res.status(500).json({ error: "Failed to get AI response" });
+    
+    // Handle rate limiting errors specifically
+    if (error?.error?.type === "insufficient_quota" || error?.status === 429) {
+      return res.status(429).json({
+        error: "Rate limit exceeded. Please try again later.",
+        details: "The AI service is currently unavailable due to rate limiting."
+      });
+    }
+
+    // Handle other API errors
+    if (error?.error?.message) {
+      return res.status(500).json({
+        error: "AI service error",
+        details: error.error.message
+      });
+    }
+
+    // Generic error fallback
+    res.status(500).json({
+      error: "Failed to get AI response",
+      details: "An unexpected error occurred while processing your request."
+    });
   }
 }
