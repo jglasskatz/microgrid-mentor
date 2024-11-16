@@ -21,12 +21,32 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       if (!canvas) return;
 
       const ctx = canvas.getContext("2d");
-      if (!ctx) return;
+      if (!ctx) {
+        console.error("Failed to get canvas context");
+        return;
+      }
+
+      // Handle high DPI displays
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
 
       const resizeCanvas = () => {
-        canvas.width = canvas.offsetWidth;
-        canvas.height = canvas.offsetHeight;
-        drawGrid(ctx, canvas.width, canvas.height);
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        canvas.style.width = `${rect.width}px`;
+        canvas.style.height = `${rect.height}px`;
+        
+        // Scale context for high DPI
+        ctx.scale(dpr, dpr);
+        
+        console.log("Canvas resized:", {
+          width: canvas.width,
+          height: canvas.height,
+          dpr,
+          components: components.length
+        });
+        
+        drawGrid(ctx, rect.width, rect.height);
         drawComponents(ctx, components);
       };
 
@@ -42,6 +62,11 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         if (selectedComponent) {
           const newComponent = handleDrop(e, selectedComponent, canvas);
           if (newComponent) {
+            console.log("Component dropped:", {
+              type: newComponent.type,
+              x: newComponent.x,
+              y: newComponent.y
+            });
             onComponentAdd(newComponent);
             toast({
               title: "Component Added",
@@ -64,8 +89,20 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
-      drawGrid(ctx, canvas.width, canvas.height);
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+
+      ctx.clearRect(0, 0, rect.width, rect.height);
+      drawGrid(ctx, rect.width, rect.height);
       drawComponents(ctx, components);
+      
+      console.log("Components updated:", {
+        count: components.length,
+        components: components.map(c => ({
+          type: c.type,
+          position: { x: c.x, y: c.y }
+        }))
+      });
     }, [components]);
 
     return (
