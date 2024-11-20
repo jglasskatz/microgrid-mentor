@@ -26,6 +26,12 @@ export default function Whiteboard() {
     if (component !== null) {
       setIsEraserMode(false);
     }
+    // Clear connection mode when selecting component
+    const canvasInstance = canvasRef.current;
+    if (canvasInstance) {
+      canvasInstance.setIsConnectionMode(false);
+      canvasInstance.setConnectionStart(null);
+    }
   };
 
   const toggleEraserMode = () => {
@@ -144,6 +150,7 @@ export default function Whiteboard() {
             onConnectionCreate={handleConnectionCreate}
             onComponentDelete={handleComponentDelete}
             isEraserMode={isEraserMode}
+            onSelectComponent={setSelectedComponent}
           />
         </ResizablePanel>
         

@@ -13,10 +13,11 @@ interface CanvasProps {
   onConnectionCreate: (sourceId: string, targetId: string) => void;
   onComponentDelete: (componentId: string) => void;
   isEraserMode: boolean;
+  onSelectComponent: (component: ComponentInstance | null) => void;
 }
 
 const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
-  ({ selectedComponent, components, onComponentAdd, onComponentUpdate, onConnectionCreate, onComponentDelete, isEraserMode }, ref) => {
+  ({ selectedComponent, components, onComponentAdd, onComponentUpdate, onConnectionCreate, onComponentDelete, isEraserMode, onSelectComponent }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const { toast } = useToast();
     const [isDragging, setIsDragging] = useState(false);
@@ -25,7 +26,11 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     const [connectionStart, setConnectionStart] = useState<ComponentInstance | null>(null);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
     
-    useImperativeHandle(ref, () => canvasRef.current!);
+    useImperativeHandle(ref, () => ({
+      ...canvasRef.current!,
+      setIsConnectionMode,
+      setConnectionStart
+    }));
 
     useEffect(() => {
       const canvas = canvasRef.current;
@@ -168,7 +173,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           className="w-full h-full bg-white"
           style={{ 
             cursor: isEraserMode 
-              ? "not-allowed" 
+              ? `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 20H7L3 16C2 15 2 13 3 12L11 4C12 3 14 3 15 4L21 10C22 11 22 13 21 14L13 22"/></svg>') 0 20, auto`
               : selectedComponent 
               ? "crosshair" 
               : isDragging 
@@ -183,7 +188,9 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             onClick={() => {
               setIsConnectionMode(!isConnectionMode);
               setConnectionStart(null);
-              setSelectedComponentInstance(null);
+              if (selectedComponent) {
+                onSelectComponent(null);
+              }
             }}
             className={isConnectionMode ? "bg-primary text-primary-foreground" : ""}
           >
