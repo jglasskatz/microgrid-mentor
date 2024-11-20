@@ -130,7 +130,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
               setConnectionStart(null);
             }
           }
-          return;
+          return; // Add this to prevent other handlers from interfering
         }
         
         if (isEraserMode && clickedComponent) {
@@ -207,17 +207,19 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             variant="outline"
             size="sm"
             onClick={() => {
-              const newConnectionMode = !isConnectionMode;
-              setIsConnectionMode(newConnectionMode);
-              setConnectionStart(null);
+              // Toggle connection mode first
+              setIsConnectionMode(!isConnectionMode);
               
-              // Always clear component selection when toggling connection mode
-              onSelectComponent(null);
-              handleComponentSelect(null);
-              
-              // Clear connection mode when selecting a component
-              if (!newConnectionMode) {
+              // Clear other states after
+              if (!isConnectionMode) {
+                // Entering connection mode
+                setConnectionStart(null);
+                onSelectComponent(null);
+                handleComponentSelect(null);
                 setSelectedComponentInstance(null);
+              } else {
+                // Exiting connection mode
+                setConnectionStart(null);
               }
             }}
             className={isConnectionMode ? "bg-primary text-primary-foreground" : ""}
