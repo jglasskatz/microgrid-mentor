@@ -54,13 +54,28 @@ export function drawConnection(
   from: ComponentInstance,
   to: ComponentInstance | { x: number; y: number }
 ) {
+  const fromBounds = getComponentBounds(from);
+  const toBounds = 'id' in to ? getComponentBounds(to) : null;
+  
+  // Calculate start point (from edge)
+  const angle = Math.atan2(to.y - from.y, to.x - from.x);
+  const startX = from.x + Math.cos(angle) * (fromBounds.width / 2);
+  const startY = from.y + Math.sin(angle) * (fromBounds.height / 2);
+  
+  // Calculate end point (to edge)
+  let endX = to.x, endY = to.y;
+  if (toBounds) {
+    endX = to.x - Math.cos(angle) * (toBounds.width / 2);
+    endY = to.y - Math.sin(angle) * (toBounds.height / 2);
+  }
+  
   ctx.beginPath();
-  ctx.moveTo(from.x, from.y);
-  ctx.lineTo(to.x, to.y);
+  ctx.moveTo(startX, startY);
+  ctx.lineTo(endX, endY);
   ctx.stroke();
   
   if ('id' in to) {
-    drawArrowhead(ctx, from, to);
+    drawArrowhead(ctx, { x: startX, y: startY }, { x: endX, y: endY });
   }
 }
 
@@ -207,6 +222,8 @@ function getComponentBounds(component: ComponentInstance) {
         y1: component.y - 20,
         x2: component.x + 40,
         y2: component.y + 20,
+        width: 80,
+        height: 40,
       };
     case "battery":
       return {
@@ -214,6 +231,8 @@ function getComponentBounds(component: ComponentInstance) {
         y1: component.y - 40,
         x2: component.x + 30,
         y2: component.y + 40,
+        width: 60,
+        height: 80,
       };
     case "load":
       return {
@@ -221,6 +240,8 @@ function getComponentBounds(component: ComponentInstance) {
         y1: component.y - 30,
         x2: component.x + 30,
         y2: component.y + 30,
+        width: 60,
+        height: 60,
       };
   }
 }
