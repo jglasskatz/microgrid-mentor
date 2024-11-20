@@ -1,8 +1,9 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import Canvas from "@/components/Canvas";
 import ComponentPalette from "@/components/ComponentPalette";
 import AICoach from "@/components/AICoach";
 import ProductPanel from "@/components/ProductPanel";
+import DesignManager from "@/components/DesignManager";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
@@ -13,6 +14,7 @@ import {
 } from "@/components/ui/resizable";
 import { ComponentInstance, getDefaultSpecs } from "@/lib/components";
 import { useToast } from "@/hooks/use-toast";
+import useSWR from "swr";
 
 export default function Whiteboard() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -22,6 +24,33 @@ export default function Whiteboard() {
   const [isEraserMode, setIsEraserMode] = useState(false);
   const [currentSpecs, setCurrentSpecs] = useState<Record<string, number | string>>({});
   const { toast } = useToast();
+
+  // Load design from URL if present
+  useEffect(() => {
+    const loadDesignFromUrl = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const designId = params.get("design");
+      if (designId) {
+        try {
+          const response = await fetch(`/api/designs/${designId}`);
+          if (!response.ok) throw new Error("Design not found");
+          const design = await response.json();
+          setComponents(design.components);
+          toast({
+            title: "Design Loaded",
+            description: `Loaded design: ${design.name}`,
+          });
+        } catch (error) {
+          toast({
+            title: "Error",
+            description: "Failed to load shared design",
+            variant: "destructive",
+          });
+        }
+      }
+    };
+    loadDesignFromUrl();
+  }, []);
 
   const handleComponentSelect = (component: string | null) => {
     setSelectedComponent(component);
@@ -135,14 +164,20 @@ export default function Whiteboard() {
     <div className="h-screen w-screen flex flex-col">
       <div className="p-4 border-b bg-white flex justify-between items-center">
         <h1 className="text-2xl font-bold">Microgrid Designer</h1>
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={resetCanvas}
-        >
-          <Trash2 className="h-4 w-4 mr-2" />
-          Reset Canvas
-        </Button>
+        <div className="flex gap-2">
+          <DesignManager
+            currentComponents={components}
+            onLoadDesign={setComponents}
+          />
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={resetCanvas}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Reset Canvas
+          </Button>
+        </div>
       </div>
       
       <ResizablePanelGroup direction="horizontal" className="flex-1">
