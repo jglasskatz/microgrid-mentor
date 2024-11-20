@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function Whiteboard() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
+  const [selectedComponentInstance, setSelectedComponentInstance] = useState<ComponentInstance | null>(null);
   const [components, setComponents] = useState<ComponentInstance[]>([]);
   const [isEraserMode, setIsEraserMode] = useState(false);
   const [currentSpecs, setCurrentSpecs] = useState<Record<string, number | string>>({});
@@ -24,6 +25,7 @@ export default function Whiteboard() {
 
   const handleComponentSelect = (component: string | null) => {
     setSelectedComponent(component);
+    setSelectedComponentInstance(null); // Clear selected instance when selecting from palette
     if (component !== null) {
       setIsEraserMode(false);
       setCurrentSpecs(getDefaultSpecs(component));
@@ -46,6 +48,7 @@ export default function Whiteboard() {
     setIsEraserMode(!isEraserMode);
     if (!isEraserMode) {
       setSelectedComponent(null);
+      setSelectedComponentInstance(null);
       setCurrentSpecs({});
     }
   };
@@ -118,6 +121,7 @@ export default function Whiteboard() {
   const resetCanvas = () => {
     setComponents([]);
     setSelectedComponent(null);
+    setSelectedComponentInstance(null);
     setIsEraserMode(false);
     setCurrentSpecs({});
     toast({
@@ -165,7 +169,7 @@ export default function Whiteboard() {
             onConnectionCreate={handleConnectionCreate}
             onComponentDelete={handleComponentDelete}
             isEraserMode={isEraserMode}
-            onSelectComponent={setSelectedComponent}
+            onSelectComponent={setSelectedComponentInstance}
           />
         </ResizablePanel>
         
@@ -183,7 +187,7 @@ export default function Whiteboard() {
             
             <ResizablePanel defaultSize={50}>
               <Card className="h-full rounded-none border-l">
-                <ProductPanel selectedComponent={components.find(c => c.id === selectedComponentInstance?.id)} />
+                <ProductPanel selectedComponent={selectedComponentInstance} />
               </Card>
             </ResizablePanel>
           </ResizablePanelGroup>

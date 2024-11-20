@@ -122,6 +122,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         
         if (isEraserMode && clickedComponent) {
           onComponentDelete(clickedComponent.id);
+          onSelectComponent(null);
           return;
         }
 
@@ -141,10 +142,12 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             }
           } else {
             setSelectedComponentInstance(clickedComponent);
+            onSelectComponent(clickedComponent);
             setIsDragging(true);
           }
         } else {
           setSelectedComponentInstance(null);
+          onSelectComponent(null);
           setConnectionStart(null);
         }
       };
@@ -175,7 +178,8 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       onComponentAdd,
       onComponentUpdate,
       onConnectionCreate,
-      onComponentDelete
+      onComponentDelete,
+      onSelectComponent
     ]);
 
     return (
