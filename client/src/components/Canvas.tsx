@@ -204,9 +204,8 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             onClick={() => {
               setIsConnectionMode(!isConnectionMode);
               setConnectionStart(null);
-              if (selectedComponent) {
-                onSelectComponent(null);
-              }
+              setSelectedComponentInstance(null);
+              onSelectComponent(null);
             }}
             className={isConnectionMode ? "bg-primary text-primary-foreground" : ""}
           >

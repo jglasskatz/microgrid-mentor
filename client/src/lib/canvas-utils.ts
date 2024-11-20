@@ -187,8 +187,11 @@ export function drawComponents(
     ctx.font = "12px sans-serif";
     ctx.textAlign = "center";
     
-    // Draw component type
-    ctx.fillText(component.type, component.x, component.y - 5);
+    // Draw component label with load name support
+    const label = component.type === 'load' && component.specs.name 
+      ? component.specs.name 
+      : component.type;
+    ctx.fillText(label, component.x, component.y - 5);
     
     // Draw power information
     let powerText = "";
