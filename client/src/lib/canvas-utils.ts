@@ -1,4 +1,5 @@
 import { ComponentInstance } from "./components";
+import { calculateComponentPower } from "./power-utils";
 
 const GRID_SIZE = 20;
 const ARROW_HEAD_SIZE = 10;
@@ -57,12 +58,10 @@ export function drawConnection(
   const fromBounds = getComponentBounds(from);
   const toBounds = 'id' in to ? getComponentBounds(to) : null;
   
-  // Calculate start point (from edge)
   const angle = Math.atan2(to.y - from.y, to.x - from.x);
   const startX = from.x + Math.cos(angle) * (fromBounds.width / 2);
   const startY = from.y + Math.sin(angle) * (fromBounds.height / 2);
   
-  // Calculate end point (to edge)
   let endX = to.x, endY = to.y;
   if (toBounds) {
     endX = to.x - Math.cos(angle) * (toBounds.width / 2);
@@ -150,6 +149,7 @@ export function drawComponents(
   components.forEach((component) => {
     const isSelected = selectedComponent?.id === component.id;
     const color = getComponentColor(component.type);
+    const power = calculateComponentPower(component.type, component.specs);
     
     if (isSelected) {
       ctx.shadowColor = color;
@@ -186,7 +186,25 @@ export function drawComponents(
     ctx.fillStyle = "#000";
     ctx.font = "12px sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(component.type, component.x, component.y);
+    
+    // Draw component type
+    ctx.fillText(component.type, component.x, component.y - 5);
+    
+    // Draw power information
+    let powerText = "";
+    switch (component.type) {
+      case "solar":
+      case "wind":
+        powerText = `${power.output.toFixed(0)}W`;
+        break;
+      case "battery":
+        powerText = `${component.specs.capacity}Wh`;
+        break;
+      case "load":
+        powerText = `${power.input.toFixed(0)}W`;
+        break;
+    }
+    ctx.fillText(powerText, component.x, component.y + 15);
   });
   
   ctx.restore();
@@ -197,7 +215,6 @@ export function findComponentAtPosition(
   y: number,
   components: ComponentInstance[]
 ): ComponentInstance | null {
-  // Check in reverse order to select top-most component first
   for (let i = components.length - 1; i >= 0; i--) {
     const component = components[i];
     const bounds = getComponentBounds(component);

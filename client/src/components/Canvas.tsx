@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ComponentInstance } from "@/lib/components";
 import { Button } from "@/components/ui/button";
 import { Link2 } from "lucide-react";
+import { calculateSystemPower } from "@/lib/power-utils";
 
 interface CanvasProps {
   selectedComponent: string | null;
@@ -31,6 +32,17 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       setIsConnectionMode,
       setConnectionStart
     }));
+
+    // Calculate and display system power stats when components change
+    useEffect(() => {
+      const systemPower = calculateSystemPower(components);
+      const netPowerStatus = systemPower.netPower >= 0 ? 'surplus' : 'deficit';
+      
+      toast({
+        title: "System Power Status",
+        description: `Generation: ${systemPower.totalGeneration.toFixed(1)}W | Load: ${systemPower.totalConsumption.toFixed(1)}W | Storage: ${systemPower.storageCapacity.toFixed(1)}Wh | Net: ${systemPower.netPower.toFixed(1)}W (${netPowerStatus})`,
+      });
+    }, [components]);
 
     useEffect(() => {
       const canvas = canvasRef.current;
