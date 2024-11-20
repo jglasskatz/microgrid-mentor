@@ -1,9 +1,9 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
-import { drawGrid, drawComponents, handleDrop, findComponentAtPosition, drawConnectionPreview } from "@/lib/canvas-utils";
+import { drawGrid, drawComponents, findComponentAtPosition, drawConnectionPreview, createComponent, drawComponentPreview } from "@/lib/canvas-utils";
 import { useToast } from "@/hooks/use-toast";
 import { ComponentInstance } from "@/lib/components";
 import { Button } from "@/components/ui/button";
-import { Link2 } from "lucide-react";
+import { Link2, Eraser } from "lucide-react";
 
 interface CanvasProps {
   selectedComponent: string | null;
@@ -11,14 +11,17 @@ interface CanvasProps {
   onComponentAdd: (component: ComponentInstance) => void;
   onComponentUpdate: (updatedComponent: ComponentInstance) => void;
   onConnectionCreate: (sourceId: string, targetId: string) => void;
+  onComponentDelete: (componentId: string) => void;
+  isEraserMode: boolean;
+  onEraserModeToggle: () => void;
 }
 
 const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
-  ({ selectedComponent, components, onComponentAdd, onComponentUpdate, onConnectionCreate }, ref) => {
+  ({ selectedComponent, components, onComponentAdd, onComponentUpdate, onConnectionCreate, onComponentDelete, isEraserMode, onEraserModeToggle }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const { toast } = useToast();
     const [isDragging, setIsDragging] = useState(false);
-    const [draggedComponent, setDraggedComponent] = useState<ComponentInstance | null>(null);
+    const [selectedComponentInstance, setSelectedComponentInstance] = useState<ComponentInstance | null>(null);
     const [isConnectionMode, setIsConnectionMode] = useState(false);
     const [connectionStart, setConnectionStart] = useState<ComponentInstance | null>(null);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -35,7 +38,6 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         return;
       }
 
-      // Handle high DPI displays
       const dpr = window.devicePixelRatio || 1;
       const rect = canvas.getBoundingClientRect();
 
@@ -48,16 +50,52 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         ctx.scale(dpr, dpr);
         
         drawGrid(ctx, rect.width, rect.height);
-        drawComponents(ctx, components);
+        drawComponents(ctx, components, selectedComponentInstance);
         
-        // Draw connection preview if in connection mode
         if (isConnectionMode && connectionStart) {
           drawConnectionPreview(ctx, connectionStart, mousePos);
+        }
+
+        if (selectedComponent && !isDragging) {
+          drawComponentPreview(ctx, selectedComponent, mousePos);
         }
       };
 
       resizeCanvas();
       window.addEventListener("resize", resizeCanvas);
+
+      const handleMouseMove = (e: MouseEvent) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX - rect.left) * dpr;
+        const y = (e.clientY - rect.top) * dpr;
+        
+        setMousePos({ x, y });
+        
+        if (isDragging && selectedComponentInstance) {
+          const snappedX = Math.round(x / 20) * 20;
+          const snappedY = Math.round(y / 20) * 20;
+          
+          const updatedComponent = {
+            ...selectedComponentInstance,
+            x: snappedX,
+            y: snappedY,
+          };
+          
+          onComponentUpdate(updatedComponent);
+        }
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawGrid(ctx, rect.width, rect.height);
+        drawComponents(ctx, components, selectedComponentInstance);
+        
+        if (isConnectionMode && connectionStart) {
+          drawConnectionPreview(ctx, connectionStart, { x, y });
+        }
+
+        if (selectedComponent && !isDragging) {
+          drawComponentPreview(ctx, selectedComponent, { x, y });
+        }
+      };
 
       const handleMouseDown = (e: MouseEvent) => {
         const rect = canvas.getBoundingClientRect();
@@ -65,6 +103,17 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         const y = (e.clientY - rect.top) * dpr;
         
         const clickedComponent = findComponentAtPosition(x, y, components);
+        
+        if (isEraserMode && clickedComponent) {
+          onComponentDelete(clickedComponent.id);
+          return;
+        }
+
+        if (selectedComponent) {
+          const newComponent = createComponent(selectedComponent, x, y);
+          onComponentAdd(newComponent);
+          return;
+        }
         
         if (clickedComponent) {
           if (isConnectionMode) {
@@ -75,66 +124,22 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
               setConnectionStart(null);
             }
           } else {
+            setSelectedComponentInstance(clickedComponent);
             setIsDragging(true);
-            setDraggedComponent(clickedComponent);
           }
-        }
-      };
-
-      const handleMouseMove = (e: MouseEvent) => {
-        const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX - rect.left) * dpr;
-        const y = (e.clientY - rect.top) * dpr;
-        
-        setMousePos({ x, y });
-        
-        if (isDragging && draggedComponent) {
-          // Snap to grid
-          const snappedX = Math.round(x / 20) * 20;
-          const snappedY = Math.round(y / 20) * 20;
-          
-          const updatedComponent = {
-            ...draggedComponent,
-            x: snappedX,
-            y: snappedY,
-          };
-          
-          onComponentUpdate(updatedComponent);
-        }
-        
-        // Redraw canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        drawGrid(ctx, rect.width, rect.height);
-        drawComponents(ctx, components);
-        
-        if (isConnectionMode && connectionStart) {
-          drawConnectionPreview(ctx, connectionStart, { x, y });
+        } else {
+          setSelectedComponentInstance(null);
+          setConnectionStart(null);
         }
       };
 
       const handleMouseUp = () => {
         setIsDragging(false);
-        setDraggedComponent(null);
       };
 
       canvas.addEventListener("mousemove", handleMouseMove);
       canvas.addEventListener("mousedown", handleMouseDown);
       canvas.addEventListener("mouseup", handleMouseUp);
-      canvas.addEventListener("dragover", (e) => e.preventDefault());
-
-      canvas.addEventListener("drop", (e) => {
-        e.preventDefault();
-        if (selectedComponent) {
-          const newComponent = handleDrop(e, selectedComponent, canvas);
-          if (newComponent) {
-            onComponentAdd(newComponent);
-            toast({
-              title: "Component Added",
-              description: `Added ${selectedComponent} to the canvas`,
-            });
-          }
-        }
-      });
 
       return () => {
         window.removeEventListener("resize", resizeCanvas);
@@ -142,27 +147,59 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         canvas.removeEventListener("mousedown", handleMouseDown);
         canvas.removeEventListener("mouseup", handleMouseUp);
       };
-    }, [selectedComponent, components, isDragging, draggedComponent, isConnectionMode, connectionStart, mousePos, onComponentAdd, onComponentUpdate, onConnectionCreate, toast]);
+    }, [
+      selectedComponent,
+      components,
+      isDragging,
+      selectedComponentInstance,
+      isConnectionMode,
+      connectionStart,
+      mousePos,
+      isEraserMode,
+      onComponentAdd,
+      onComponentUpdate,
+      onConnectionCreate,
+      onComponentDelete
+    ]);
 
     return (
       <div className="relative w-full h-full">
         <canvas
           ref={canvasRef}
           className="w-full h-full bg-white"
-          style={{ cursor: selectedComponent ? "crosshair" : isDragging ? "grabbing" : "default" }}
-        />
-        <Button
-          variant="outline"
-          size="sm"
-          className="absolute top-4 right-4"
-          onClick={() => {
-            setIsConnectionMode(!isConnectionMode);
-            setConnectionStart(null);
+          style={{ 
+            cursor: isEraserMode 
+              ? "not-allowed" 
+              : selectedComponent 
+              ? "crosshair" 
+              : isDragging 
+              ? "grabbing" 
+              : "default" 
           }}
-        >
-          <Link2 className={`h-4 w-4 mr-2 ${isConnectionMode ? "text-primary" : ""}`} />
-          {isConnectionMode ? "Cancel Connection" : "Create Connection"}
-        </Button>
+        />
+        <div className="absolute top-4 right-4 flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onEraserModeToggle}
+            className={isEraserMode ? "bg-destructive text-destructive-foreground" : ""}
+          >
+            <Eraser className={`h-4 w-4 mr-2`} />
+            {isEraserMode ? "Cancel" : "Eraser"}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setIsConnectionMode(!isConnectionMode);
+              setConnectionStart(null);
+            }}
+            className={isConnectionMode ? "bg-primary text-primary-foreground" : ""}
+          >
+            <Link2 className={`h-4 w-4 mr-2`} />
+            {isConnectionMode ? "Cancel" : "Connect"}
+          </Button>
+        </div>
       </div>
     );
   }

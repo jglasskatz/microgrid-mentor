@@ -12,11 +12,14 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { ComponentInstance } from "@/lib/components";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Whiteboard() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
   const [components, setComponents] = useState<ComponentInstance[]>([]);
+  const [isEraserMode, setIsEraserMode] = useState(false);
+  const { toast } = useToast();
 
   const handleComponentAdd = (component: ComponentInstance) => {
     const isDuplicate = components.some(
@@ -27,6 +30,10 @@ export default function Whiteboard() {
 
     if (!isDuplicate) {
       setComponents(prev => [...prev, component]);
+      toast({
+        title: "Component Added",
+        description: `Added ${component.type} to the canvas`,
+      });
     }
   };
 
@@ -50,10 +57,43 @@ export default function Whiteboard() {
         return component;
       })
     );
+    
+    toast({
+      title: "Connection Created",
+      description: "Components have been connected successfully",
+    });
+  };
+
+  const handleComponentDelete = (componentId: string) => {
+    setComponents(prev => {
+      // Remove the component
+      const filteredComponents = prev.filter(c => c.id !== componentId);
+      
+      // Remove any connections to the deleted component
+      return filteredComponents.map(component => ({
+        ...component,
+        connections: component.connections.filter(id => id !== componentId),
+      }));
+    });
+    
+    toast({
+      title: "Component Deleted",
+      description: "Component has been removed from the canvas",
+    });
   };
 
   const resetCanvas = () => {
     setComponents([]);
+    setSelectedComponent(null);
+    setIsEraserMode(false);
+    toast({
+      title: "Canvas Reset",
+      description: "All components have been cleared",
+    });
+  };
+
+  const toggleEraserMode = () => {
+    setIsEraserMode(!isEraserMode);
     setSelectedComponent(null);
   };
 
@@ -74,7 +114,10 @@ export default function Whiteboard() {
       <ResizablePanelGroup direction="horizontal" className="flex-1">
         <ResizablePanel defaultSize={20} minSize={15}>
           <Card className="h-full rounded-none border-r">
-            <ComponentPalette onSelectComponent={setSelectedComponent} />
+            <ComponentPalette 
+              onSelectComponent={setSelectedComponent} 
+              selectedComponent={selectedComponent}
+            />
           </Card>
         </ResizablePanel>
         
@@ -88,6 +131,9 @@ export default function Whiteboard() {
             onComponentAdd={handleComponentAdd}
             onComponentUpdate={handleComponentUpdate}
             onConnectionCreate={handleConnectionCreate}
+            onComponentDelete={handleComponentDelete}
+            isEraserMode={isEraserMode}
+            onEraserModeToggle={toggleEraserMode}
           />
         </ResizablePanel>
         

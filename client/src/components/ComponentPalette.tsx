@@ -17,9 +17,10 @@ const iconMap = {
 
 interface ComponentPaletteProps {
   onSelectComponent: (component: string) => void;
+  selectedComponent: string | null;
 }
 
-export default function ComponentPalette({ onSelectComponent }: ComponentPaletteProps) {
+export default function ComponentPalette({ onSelectComponent, selectedComponent }: ComponentPaletteProps) {
   return (
     <div className="p-4 h-full flex flex-col">
       <h2 className="text-lg font-semibold mb-4">Components</h2>
@@ -27,18 +28,17 @@ export default function ComponentPalette({ onSelectComponent }: ComponentPalette
         <div className="space-y-2">
           {componentTypes.map((component) => {
             const Icon = iconMap[component.type];
+            const isSelected = selectedComponent === component.type;
             return (
               <Button
                 key={component.type}
-                variant="outline"
-                className="w-full justify-start"
-                onClick={() => onSelectComponent(component.type)}
-                draggable
-                onDragStart={(e) => {
-                  e.dataTransfer.setData("component", component.type);
-                }}
+                variant={isSelected ? "default" : "outline"}
+                className={`w-full justify-start transition-colors ${
+                  isSelected ? "bg-primary text-primary-foreground" : ""
+                }`}
+                onClick={() => onSelectComponent(isSelected ? null : component.type)}
               >
-                <Icon className={`mr-2 h-4 w-4 ${component.color}`} />
+                <Icon className={`mr-2 h-4 w-4 ${isSelected ? "text-primary-foreground" : component.color}`} />
                 {component.label}
               </Button>
             );

@@ -76,9 +76,45 @@ export function drawConnectionPreview(
   ctx.restore();
 }
 
+export function drawComponentPreview(
+  ctx: CanvasRenderingContext2D,
+  componentType: string,
+  position: { x: number; y: number }
+) {
+  ctx.save();
+  ctx.globalAlpha = 0.5;
+  ctx.strokeStyle = getComponentColor(componentType);
+  ctx.fillStyle = `${getComponentColor(componentType)}33`;
+  ctx.lineWidth = 2;
+
+  const snappedX = Math.round(position.x / GRID_SIZE) * GRID_SIZE;
+  const snappedY = Math.round(position.y / GRID_SIZE) * GRID_SIZE;
+
+  switch (componentType) {
+    case "solar":
+    case "wind":
+      ctx.beginPath();
+      ctx.rect(snappedX - 40, snappedY - 20, 80, 40);
+      break;
+    case "battery":
+      ctx.beginPath();
+      ctx.rect(snappedX - 30, snappedY - 40, 60, 80);
+      break;
+    case "load":
+      ctx.beginPath();
+      ctx.rect(snappedX - 30, snappedY - 30, 60, 60);
+      break;
+  }
+  
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
 export function drawComponents(
   ctx: CanvasRenderingContext2D, 
-  components: ComponentInstance[]
+  components: ComponentInstance[],
+  selectedComponent: ComponentInstance | null
 ) {
   ctx.save();
   
@@ -97,11 +133,17 @@ export function drawComponents(
   
   // Then draw components
   components.forEach((component) => {
+    const isSelected = selectedComponent?.id === component.id;
     const color = getComponentColor(component.type);
+    
+    if (isSelected) {
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 10;
+    }
     
     ctx.fillStyle = `${color}33`;
     ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = isSelected ? 3 : 2;
     
     switch (component.type) {
       case "solar":
@@ -125,6 +167,7 @@ export function drawComponents(
         break;
     }
 
+    ctx.shadowBlur = 0;
     ctx.fillStyle = "#000";
     ctx.font = "12px sans-serif";
     ctx.textAlign = "center";
@@ -139,15 +182,20 @@ export function findComponentAtPosition(
   y: number,
   components: ComponentInstance[]
 ): ComponentInstance | null {
-  return components.find((component) => {
+  // Check in reverse order to select top-most component first
+  for (let i = components.length - 1; i >= 0; i--) {
+    const component = components[i];
     const bounds = getComponentBounds(component);
-    return (
+    if (
       x >= bounds.x1 &&
       x <= bounds.x2 &&
       y >= bounds.y1 &&
       y <= bounds.y2
-    );
-  }) || null;
+    ) {
+      return component;
+    }
+  }
+  return null;
 }
 
 function getComponentBounds(component: ComponentInstance) {
@@ -177,15 +225,11 @@ function getComponentBounds(component: ComponentInstance) {
   }
 }
 
-export function handleDrop(
-  e: DragEvent,
+export function createComponent(
   componentType: string,
-  canvas: HTMLCanvasElement
-): ComponentInstance | null {
-  const rect = canvas.getBoundingClientRect();
-  const x = (e.clientX - rect.left);
-  const y = (e.clientY - rect.top);
-
+  x: number,
+  y: number
+): ComponentInstance {
   const snappedX = Math.round(x / GRID_SIZE) * GRID_SIZE;
   const snappedY = Math.round(y / GRID_SIZE) * GRID_SIZE;
 
