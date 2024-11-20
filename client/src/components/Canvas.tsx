@@ -206,6 +206,10 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
               setConnectionStart(null);
               setSelectedComponentInstance(null);
               onSelectComponent(null);
+              // Also ensure the parent component knows about deselection
+              if (selectedComponent) {
+                onSelectComponent(null);
+              }
             }}
             className={isConnectionMode ? "bg-primary text-primary-foreground" : ""}
           >

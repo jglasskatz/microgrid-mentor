@@ -25,16 +25,17 @@ export default function Whiteboard() {
 
   const handleComponentSelect = (component: string | null) => {
     setSelectedComponent(component);
-    setSelectedComponentInstance(null); // Clear selected instance when selecting from palette
+    setSelectedComponentInstance(null);
     if (component !== null) {
       setIsEraserMode(false);
       setCurrentSpecs(getDefaultSpecs(component));
     } else {
       setCurrentSpecs({});
     }
-    // Clear connection mode when selecting component
+    
+    // Ensure connection mode is cleared when selecting a component
     const canvasInstance = canvasRef.current;
-    if (canvasInstance) {
+    if (canvasInstance && component !== null) {
       canvasInstance.setIsConnectionMode(false);
       canvasInstance.setConnectionStart(null);
     }
