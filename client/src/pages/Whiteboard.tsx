@@ -33,9 +33,9 @@ export default function Whiteboard() {
       setCurrentSpecs({});
     }
     
-    // Ensure connection mode is cleared when selecting a component
+    // Ensure connection mode and all selections are cleared
     const canvasInstance = canvasRef.current;
-    if (canvasInstance && component !== null) {
+    if (canvasInstance) {
       canvasInstance.setIsConnectionMode(false);
       canvasInstance.setConnectionStart(null);
     }
