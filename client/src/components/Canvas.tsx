@@ -120,6 +120,18 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         const y = e.clientY - rect.top;
         
         const clickedComponent = findComponentAtPosition(x, y, components);
+
+        if (isConnectionMode) {
+          if (clickedComponent) {
+            if (!connectionStart) {
+              setConnectionStart(clickedComponent);
+            } else if (connectionStart.id !== clickedComponent.id) {
+              onConnectionCreate(connectionStart.id, clickedComponent.id);
+              setConnectionStart(null);
+            }
+          }
+          return; // Add this to prevent other handlers from interfering
+        }
         
         if (isEraserMode && clickedComponent) {
           onComponentDelete(clickedComponent.id);
@@ -134,18 +146,9 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         }
         
         if (clickedComponent) {
-          if (isConnectionMode) {
-            if (!connectionStart) {
-              setConnectionStart(clickedComponent);
-            } else if (connectionStart.id !== clickedComponent.id) {
-              onConnectionCreate(connectionStart.id, clickedComponent.id);
-              setConnectionStart(null);
-            }
-          } else {
-            setSelectedComponentInstance(clickedComponent);
-            onSelectComponent(clickedComponent);
-            setIsDragging(true);
-          }
+          setSelectedComponentInstance(clickedComponent);
+          onSelectComponent(clickedComponent);
+          setIsDragging(true);
         } else {
           setSelectedComponentInstance(null);
           onSelectComponent(null);
@@ -205,11 +208,10 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             onClick={() => {
               setIsConnectionMode(!isConnectionMode);
               setConnectionStart(null);
-              setSelectedComponentInstance(null);
               if (selectedComponent) {
                 onSelectComponent(null);
+                handleComponentSelect(null);
               }
-              handleComponentSelect(null);
             }}
             className={isConnectionMode ? "bg-primary text-primary-foreground" : ""}
           >
