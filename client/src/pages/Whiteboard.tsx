@@ -171,6 +171,7 @@ export default function Whiteboard() {
             onComponentDelete={handleComponentDelete}
             isEraserMode={isEraserMode}
             onSelectComponent={setSelectedComponentInstance}
+            handleComponentSelect={handleComponentSelect}
           />
         </ResizablePanel>
         

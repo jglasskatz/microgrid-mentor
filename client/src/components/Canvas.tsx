@@ -15,10 +15,11 @@ interface CanvasProps {
   onComponentDelete: (componentId: string) => void;
   isEraserMode: boolean;
   onSelectComponent: (component: ComponentInstance | null) => void;
+  handleComponentSelect: (component: string | null) => void;
 }
 
 const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
-  ({ selectedComponent, components, onComponentAdd, onComponentUpdate, onConnectionCreate, onComponentDelete, isEraserMode, onSelectComponent }, ref) => {
+  ({ selectedComponent, components, onComponentAdd, onComponentUpdate, onConnectionCreate, onComponentDelete, isEraserMode, onSelectComponent, handleComponentSelect }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const { toast } = useToast();
     const [isDragging, setIsDragging] = useState(false);
@@ -208,7 +209,6 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
               if (selectedComponent) {
                 onSelectComponent(null);
               }
-              // Force parent component deselection
               handleComponentSelect(null);
             }}
             className={isConnectionMode ? "bg-primary text-primary-foreground" : ""}
