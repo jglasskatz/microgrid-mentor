@@ -207,20 +207,13 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             variant="outline"
             size="sm"
             onClick={() => {
-              const newConnectionMode = !isConnectionMode;
-              setIsConnectionMode(newConnectionMode);
-              
-              if (newConnectionMode) {
-                // Entering connection mode - clear other states
-                if (selectedComponent) {
-                  handleComponentSelect(null);
-                }
-                setSelectedComponentInstance(null);
-                onSelectComponent(null);
-              } else {
-                // Exiting connection mode
-                setConnectionStart(null);
+              if (selectedComponent) {
+                handleComponentSelect(null);
               }
+              setSelectedComponentInstance(null);
+              onSelectComponent(null);
+              setIsConnectionMode(!isConnectionMode);
+              setConnectionStart(null);
             }}
             className={`${isConnectionMode ? "bg-primary text-primary-foreground" : ""}`}
           >
