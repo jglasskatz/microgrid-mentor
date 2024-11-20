@@ -50,10 +50,17 @@ export function drawArrowhead(
   ctx.stroke();
 }
 
+// Add animation offset for power flow
+let flowOffset = 0;
+const FLOW_SPEED = 1;
+const DASH_LENGTH = 10;
+
+// Update drawConnection function to show power flow
 export function drawConnection(
   ctx: CanvasRenderingContext2D,
   from: ComponentInstance,
-  to: ComponentInstance | { x: number; y: number }
+  to: ComponentInstance | { x: number; y: number },
+  animate = false
 ) {
   const fromBounds = getComponentBounds(from);
   const toBounds = 'id' in to ? getComponentBounds(to) : null;
@@ -68,12 +75,46 @@ export function drawConnection(
     endY = to.y - Math.sin(angle) * (toBounds.height / 2);
   }
   
+  // Draw the main connection line
   ctx.beginPath();
   ctx.moveTo(startX, startY);
   ctx.lineTo(endX, endY);
   ctx.stroke();
   
   if ('id' in to) {
+    // Calculate power flow
+    const fromPower = calculateComponentPower(from.type, from.specs);
+    const toPower = calculateComponentPower(to.type, to.specs);
+    const powerValue = Math.min(fromPower.output, toPower.input);
+    
+    // Draw power value
+    const midX = (startX + endX) / 2;
+    const midY = (startY + endY) / 2;
+    ctx.save();
+    ctx.fillStyle = '#000';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${powerValue.toFixed(0)}W`, midX, midY - 10);
+    ctx.restore();
+
+    // Draw animated flow indicators
+    if (animate) {
+      const distance = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+      const numDashes = Math.floor(distance / (DASH_LENGTH * 2));
+      
+      ctx.save();
+      ctx.strokeStyle = '#666';
+      ctx.setLineDash([DASH_LENGTH, DASH_LENGTH]);
+      ctx.lineDashOffset = -flowOffset;
+      
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(endX, endY);
+      ctx.stroke();
+      
+      ctx.restore();
+    }
+
     drawArrowhead(ctx, { x: startX, y: startY }, { x: endX, y: endY });
   }
 }
@@ -125,11 +166,17 @@ export function drawComponentPreview(
   ctx.restore();
 }
 
+// Update drawComponents to include animation
 export function drawComponents(
   ctx: CanvasRenderingContext2D, 
   components: ComponentInstance[],
-  selectedComponent: ComponentInstance | null
+  selectedComponent: ComponentInstance | null,
+  animate = false
 ) {
+  if (animate) {
+    flowOffset = (flowOffset + FLOW_SPEED) % (DASH_LENGTH * 2);
+  }
+  
   ctx.save();
   
   // Draw connections first
@@ -140,7 +187,7 @@ export function drawComponents(
     component.connections.forEach((targetId) => {
       const target = components.find((c) => c.id === targetId);
       if (target) {
-        drawConnection(ctx, component, target);
+        drawConnection(ctx, component, target, animate);
       }
     });
   });

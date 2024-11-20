@@ -5,6 +5,13 @@ import { ComponentInstance } from "@/lib/components";
 import { Button } from "@/components/ui/button";
 import { Link2 } from "lucide-react";
 import { calculateSystemPower } from "@/lib/power-utils";
+import PowerSummaryPanel from "./PowerSummaryPanel";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface CanvasProps {
   selectedComponent: string | null;
@@ -27,6 +34,8 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     const [isConnectionMode, setIsConnectionMode] = useState(false);
     const [connectionStart, setConnectionStart] = useState<ComponentInstance | null>(null);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+    const [hoveredComponent, setHoveredComponent] = useState<ComponentInstance | null>(null);
+    const [systemPower, setSystemPower] = useState(calculateSystemPower(components));
     
     useImperativeHandle(ref, () => ({
       ...canvasRef.current!,
@@ -34,15 +43,10 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       setConnectionStart
     }));
 
-    // Calculate and display system power stats when components change
+    // Update system power when components change
     useEffect(() => {
-      const systemPower = calculateSystemPower(components);
-      const netPowerStatus = systemPower.netPower >= 0 ? 'surplus' : 'deficit';
-      
-      toast({
-        title: "System Power Status",
-        description: `Generation: ${systemPower.totalGeneration.toFixed(1)}W | Load: ${systemPower.totalConsumption.toFixed(1)}W | Storage: ${systemPower.storageCapacity.toFixed(1)}Wh | Net: ${systemPower.netPower.toFixed(1)}W (${netPowerStatus})`,
-      });
+      const newSystemPower = calculateSystemPower(components);
+      setSystemPower(newSystemPower);
     }, [components]);
 
     useEffect(() => {
@@ -88,6 +92,10 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         
         setMousePos({ x, y });
         
+        // Update hovered component
+        const component = findComponentAtPosition(x, y, components);
+        setHoveredComponent(component);
+        
         if (isDragging && selectedComponentInstance) {
           const snappedX = Math.round(x / 20) * 20;
           const snappedY = Math.round(y / 20) * 20;
@@ -103,7 +111,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         drawGrid(ctx, rect.width, rect.height);
-        drawComponents(ctx, components, selectedComponentInstance);
+        drawComponents(ctx, components, selectedComponentInstance, true); // Added animated parameter
         
         if (isConnectionMode && connectionStart) {
           drawConnectionPreview(ctx, connectionStart, { x, y });
@@ -189,19 +197,53 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
 
     return (
       <div className="relative w-full h-full">
-        <canvas
-          ref={canvasRef}
-          className="w-full h-full bg-white"
-          style={{ 
-            cursor: isEraserMode 
-              ? `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="%23ff69b4" stroke-width="2"><path d="M18 13L11 20H4L9 15M18 13L22 9L15 2L11 6M18 13L11 6"/></svg>') 0 20, auto`
-              : selectedComponent 
-              ? "crosshair" 
-              : isDragging 
-              ? "grabbing" 
-              : "default" 
-          }}
-        />
+        <PowerSummaryPanel systemPower={systemPower} />
+        
+        <TooltipProvider>
+          <Tooltip open={hoveredComponent !== null}>
+            <TooltipTrigger asChild>
+              <canvas
+                ref={canvasRef}
+                className="w-full h-full bg-white"
+                style={{ 
+                  cursor: isEraserMode 
+                    ? `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="%23ff69b4" stroke-width="2"><path d="M18 13L11 20H4L9 15M18 13L22 9L15 2L11 6M18 13L11 6"/></svg>') 0 20, auto`
+                    : selectedComponent 
+                    ? "crosshair" 
+                    : isDragging 
+                    ? "grabbing" 
+                    : "default" 
+                }}
+              />
+            </TooltipTrigger>
+            {hoveredComponent && (
+              <TooltipContent>
+                {hoveredComponent.type === 'solar' && (
+                  <div>
+                    <div>Current Output: {hoveredComponent.specs.power}W</div>
+                    <div>Panel Capacity: {hoveredComponent.specs.power}W</div>
+                    <div>Efficiency: {(Number(hoveredComponent.specs.efficiency) * 100).toFixed(1)}%</div>
+                  </div>
+                )}
+                {hoveredComponent.type === 'battery' && (
+                  <div>
+                    <div>Capacity: {hoveredComponent.specs.capacity}Wh</div>
+                    <div>Max Charge Rate: {hoveredComponent.specs.maxChargePower}W</div>
+                    <div>Voltage: {hoveredComponent.specs.voltage}V</div>
+                  </div>
+                )}
+                {hoveredComponent.type === 'load' && (
+                  <div>
+                    <div>Power Draw: {hoveredComponent.specs.power}W</div>
+                    <div>Type: {hoveredComponent.specs.name}</div>
+                    <div>Voltage: {hoveredComponent.specs.voltage}V</div>
+                  </div>
+                )}
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
+
         <div className="absolute top-4 right-4 flex gap-2">
           <Button
             variant="outline"
