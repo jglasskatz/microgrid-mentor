@@ -21,6 +21,20 @@ export default function Whiteboard() {
   const [isEraserMode, setIsEraserMode] = useState(false);
   const { toast } = useToast();
 
+  const handleComponentSelect = (component: string | null) => {
+    setSelectedComponent(component);
+    if (component !== null) {
+      setIsEraserMode(false);
+    }
+  };
+
+  const toggleEraserMode = () => {
+    setIsEraserMode(!isEraserMode);
+    if (!isEraserMode) {
+      setSelectedComponent(null);
+    }
+  };
+
   const handleComponentAdd = (component: ComponentInstance) => {
     const isDuplicate = components.some(
       (c) => c.type === component.type && 
@@ -92,11 +106,6 @@ export default function Whiteboard() {
     });
   };
 
-  const toggleEraserMode = () => {
-    setIsEraserMode(!isEraserMode);
-    setSelectedComponent(null);
-  };
-
   return (
     <div className="h-screen w-screen flex flex-col">
       <div className="p-4 border-b bg-white flex justify-between items-center">
@@ -115,8 +124,10 @@ export default function Whiteboard() {
         <ResizablePanel defaultSize={20} minSize={15}>
           <Card className="h-full rounded-none border-r">
             <ComponentPalette 
-              onSelectComponent={setSelectedComponent} 
+              onSelectComponent={handleComponentSelect} 
               selectedComponent={selectedComponent}
+              isEraserMode={isEraserMode}
+              onEraserModeToggle={toggleEraserMode}
             />
           </Card>
         </ResizablePanel>
@@ -133,7 +144,6 @@ export default function Whiteboard() {
             onConnectionCreate={handleConnectionCreate}
             onComponentDelete={handleComponentDelete}
             isEraserMode={isEraserMode}
-            onEraserModeToggle={toggleEraserMode}
           />
         </ResizablePanel>
         

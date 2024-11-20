@@ -3,7 +3,7 @@ import { drawGrid, drawComponents, findComponentAtPosition, drawConnectionPrevie
 import { useToast } from "@/hooks/use-toast";
 import { ComponentInstance } from "@/lib/components";
 import { Button } from "@/components/ui/button";
-import { Link2, Eraser } from "lucide-react";
+import { Link2 } from "lucide-react";
 
 interface CanvasProps {
   selectedComponent: string | null;
@@ -13,11 +13,10 @@ interface CanvasProps {
   onConnectionCreate: (sourceId: string, targetId: string) => void;
   onComponentDelete: (componentId: string) => void;
   isEraserMode: boolean;
-  onEraserModeToggle: () => void;
 }
 
 const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
-  ({ selectedComponent, components, onComponentAdd, onComponentUpdate, onConnectionCreate, onComponentDelete, isEraserMode, onEraserModeToggle }, ref) => {
+  ({ selectedComponent, components, onComponentAdd, onComponentUpdate, onConnectionCreate, onComponentDelete, isEraserMode }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const { toast } = useToast();
     const [isDragging, setIsDragging] = useState(false);
@@ -66,8 +65,8 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
 
       const handleMouseMove = (e: MouseEvent) => {
         const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX - rect.left) * dpr;
-        const y = (e.clientY - rect.top) * dpr;
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
         
         setMousePos({ x, y });
         
@@ -99,8 +98,8 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
 
       const handleMouseDown = (e: MouseEvent) => {
         const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX - rect.left) * dpr;
-        const y = (e.clientY - rect.top) * dpr;
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
         
         const clickedComponent = findComponentAtPosition(x, y, components);
         
@@ -181,18 +180,10 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           <Button
             variant="outline"
             size="sm"
-            onClick={onEraserModeToggle}
-            className={isEraserMode ? "bg-destructive text-destructive-foreground" : ""}
-          >
-            <Eraser className={`h-4 w-4 mr-2`} />
-            {isEraserMode ? "Cancel" : "Eraser"}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
             onClick={() => {
               setIsConnectionMode(!isConnectionMode);
               setConnectionStart(null);
+              setSelectedComponentInstance(null);
             }}
             className={isConnectionMode ? "bg-primary text-primary-foreground" : ""}
           >
