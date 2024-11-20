@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { componentTypes } from "@/lib/components";
+import PowerSpecsMenu from "./PowerSpecsMenu";
 import { 
   Battery, 
   Sun, 
@@ -21,6 +22,7 @@ interface ComponentPaletteProps {
   selectedComponent: string | null;
   isEraserMode: boolean;
   onEraserModeToggle: () => void;
+  onSpecsChange?: (specs: Record<string, number | string>) => void;
 }
 
 export default function ComponentPalette({ 
@@ -28,6 +30,7 @@ export default function ComponentPalette({
   selectedComponent,
   isEraserMode,
   onEraserModeToggle,
+  onSpecsChange,
 }: ComponentPaletteProps) {
   return (
     <div className="p-4 h-full flex flex-col">
@@ -38,22 +41,29 @@ export default function ComponentPalette({
             const Icon = iconMap[component.type];
             const isSelected = selectedComponent === component.type && !isEraserMode;
             return (
-              <Button
-                key={component.type}
-                variant={isSelected ? "default" : "outline"}
-                className={`w-full justify-start transition-colors ${
-                  isSelected ? "bg-primary text-primary-foreground" : ""
-                }`}
-                onClick={() => {
-                  if (isEraserMode) {
-                    onEraserModeToggle();
-                  }
-                  onSelectComponent(isSelected ? null : component.type);
-                }}
-              >
-                <Icon className={`mr-2 h-4 w-4 ${isSelected ? "text-primary-foreground" : component.color}`} />
-                {component.label}
-              </Button>
+              <div key={component.type} className="flex items-center gap-2">
+                <Button
+                  variant={isSelected ? "default" : "outline"}
+                  className={`flex-1 justify-start transition-colors ${
+                    isSelected ? "bg-primary text-primary-foreground" : ""
+                  }`}
+                  onClick={() => {
+                    if (isEraserMode) {
+                      onEraserModeToggle();
+                    }
+                    onSelectComponent(isSelected ? null : component.type);
+                  }}
+                >
+                  <Icon className={`mr-2 h-4 w-4 ${isSelected ? "text-primary-foreground" : component.color}`} />
+                  {component.label}
+                </Button>
+                {isSelected && onSpecsChange && (
+                  <PowerSpecsMenu
+                    componentType={component.type}
+                    onSpecsChange={onSpecsChange}
+                  />
+                )}
+              </div>
             );
           })}
           <Button

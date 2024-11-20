@@ -11,7 +11,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { ComponentInstance } from "@/lib/components";
+import { ComponentInstance, getDefaultSpecs } from "@/lib/components";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Whiteboard() {
@@ -19,12 +19,16 @@ export default function Whiteboard() {
   const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
   const [components, setComponents] = useState<ComponentInstance[]>([]);
   const [isEraserMode, setIsEraserMode] = useState(false);
+  const [currentSpecs, setCurrentSpecs] = useState<Record<string, number | string>>({});
   const { toast } = useToast();
 
   const handleComponentSelect = (component: string | null) => {
     setSelectedComponent(component);
     if (component !== null) {
       setIsEraserMode(false);
+      setCurrentSpecs(getDefaultSpecs(component));
+    } else {
+      setCurrentSpecs({});
     }
     // Clear connection mode when selecting component
     const canvasInstance = canvasRef.current;
@@ -34,10 +38,15 @@ export default function Whiteboard() {
     }
   };
 
+  const handleSpecsChange = (specs: Record<string, number | string>) => {
+    setCurrentSpecs(specs);
+  };
+
   const toggleEraserMode = () => {
     setIsEraserMode(!isEraserMode);
     if (!isEraserMode) {
       setSelectedComponent(null);
+      setCurrentSpecs({});
     }
   };
 
@@ -49,7 +58,11 @@ export default function Whiteboard() {
     );
 
     if (!isDuplicate) {
-      setComponents(prev => [...prev, component]);
+      const newComponent = {
+        ...component,
+        specs: { ...currentSpecs },
+      };
+      setComponents(prev => [...prev, newComponent]);
       toast({
         title: "Component Added",
         description: `Added ${component.type} to the canvas`,
@@ -106,6 +119,7 @@ export default function Whiteboard() {
     setComponents([]);
     setSelectedComponent(null);
     setIsEraserMode(false);
+    setCurrentSpecs({});
     toast({
       title: "Canvas Reset",
       description: "All components have been cleared",
@@ -134,6 +148,7 @@ export default function Whiteboard() {
               selectedComponent={selectedComponent}
               isEraserMode={isEraserMode}
               onEraserModeToggle={toggleEraserMode}
+              onSpecsChange={handleSpecsChange}
             />
           </Card>
         </ResizablePanel>
@@ -168,7 +183,7 @@ export default function Whiteboard() {
             
             <ResizablePanel defaultSize={50}>
               <Card className="h-full rounded-none border-l">
-                <ProductPanel />
+                <ProductPanel selectedComponent={components.find(c => c.id === selectedComponentInstance?.id)} />
               </Card>
             </ResizablePanel>
           </ResizablePanelGroup>
