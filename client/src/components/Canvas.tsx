@@ -194,6 +194,22 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
       onComponentDelete,
       onSelectComponent
     ]);
+    // Add keyboard event listener for Escape key
+    useEffect(() => {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+          setSelectedComponentInstance(null);
+          onSelectComponent(null);
+          handleComponentSelect(null);
+          setIsConnectionMode(false);
+          setConnectionStart(null);
+        }
+      };
+
+      window.addEventListener("keydown", handleKeyDown);
+      return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [onSelectComponent, handleComponentSelect]);
+
 
     return (
       <div className="relative w-full h-full">
