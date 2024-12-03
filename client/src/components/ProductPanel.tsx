@@ -23,9 +23,21 @@ export default function ProductPanel({ selectedComponent }: ProductPanelProps) {
   const [products, setProducts] = useState<Product[]>([]);
 
   const searchProducts = async (type: string, specs: Record<string, number | string>) => {
+    // Convert specs to ranges (±10% of the target value)
+    const specRanges = Object.entries(specs).reduce((acc, [key, value]) => {
+      if (typeof value === 'number') {
+        const range = value * 0.1;
+        acc[`${key}_min`] = value - range;
+        acc[`${key}_max`] = value + range;
+      } else {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
+
     const params = new URLSearchParams({
       type,
-      ...specs as Record<string, string>
+      ...specRanges
     });
     const response = await fetch(`/api/products/search?${params}`);
     return response.json();
@@ -77,9 +89,15 @@ export default function ProductPanel({ selectedComponent }: ProductPanelProps) {
                     ${product.price.toFixed(2)}
                   </p>
                 </div>
-                <Button variant="outline" size="sm">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => {
+                    window.location.href = `/products/${product.id}`;
+                  }}
+                >
                   <ExternalLink className="h-4 w-4 mr-2" />
-                  View
+                  View Details
                 </Button>
               </div>
             </Card>

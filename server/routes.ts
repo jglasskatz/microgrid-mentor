@@ -114,16 +114,20 @@ export function registerRoutes(app: Express) {
         filteredProducts = filteredProducts.filter(p => p.type === type);
       }
       
-      // Match specifications if provided
-      if (Object.keys(specs).length > 0) {
-        filteredProducts = filteredProducts.filter(product => {
-          return Object.entries(specs).every(([key, value]) => {
-            const specValue = product.specs[key];
-            return specValue === undefined || 
-                   specValue.toString() === value.toString();
-          });
+      // Handle range-based search
+      filteredProducts = filteredProducts.filter(product => {
+        return Object.entries(specs).every(([key, value]) => {
+          if (key.endsWith('_min')) {
+            const baseKey = key.replace('_min', '');
+            return product.specs[baseKey] >= Number(value);
+          }
+          if (key.endsWith('_max')) {
+            const baseKey = key.replace('_max', '');
+            return product.specs[baseKey] <= Number(value);
+          }
+          return product.specs[key]?.toString() === value?.toString();
         });
-      }
+      });
       
       res.json(filteredProducts);
     } catch (error) {
