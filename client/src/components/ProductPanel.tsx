@@ -22,23 +22,24 @@ interface ProductPanelProps {
 export default function ProductPanel({ selectedComponent }: ProductPanelProps) {
   const [products, setProducts] = useState<Product[]>([]);
 
-  const searchProducts = async (type: string, specs: Record<string, number | string>) => {
-    // Convert specs to ranges (±10% of the target value)
-    const specRanges = Object.entries(specs).reduce((acc, [key, value]) => {
-      if (typeof value === 'number') {
-        const range = value * 0.1;
-        acc[`${key}_min`] = value - range;
-        acc[`${key}_max`] = value + range;
-      } else {
-        acc[key] = value;
-      }
-      return acc;
-    }, {});
+  const searchProducts = async (component: ComponentInstance) => {
+    // Create search criteria based on component specs
+    const searchParams = {
+      type: component.type,
+      ...Object.entries(component.specs).reduce((acc, [key, value]) => {
+        if (typeof value === 'number') {
+          // Create range of ±15% for better matches
+          const range = value * 0.15;
+          acc[`${key}_min`] = value - range;
+          acc[`${key}_max`] = value + range;
+        } else {
+          acc[key] = value;
+        }
+        return acc;
+      }, {}),
+    };
 
-    const params = new URLSearchParams({
-      type,
-      ...specRanges
-    });
+    const params = new URLSearchParams(searchParams);
     const response = await fetch(`/api/products/search?${params}`);
     return response.json();
   };
@@ -47,7 +48,7 @@ export default function ProductPanel({ selectedComponent }: ProductPanelProps) {
     const fetchProducts = async () => {
       try {
         if (selectedComponent) {
-          const results = await searchProducts(selectedComponent.type, selectedComponent.specs);
+          const results = await searchProducts(selectedComponent);
           setProducts(results);
         } else {
           const results = await fetch('/api/products/search').then(res => res.json());
@@ -81,13 +82,21 @@ export default function ProductPanel({ selectedComponent }: ProductPanelProps) {
                   <p className="text-sm text-muted-foreground">
                     {product.description}
                   </p>
-                  <div className="mt-1 text-sm text-muted-foreground">
-                    {product.specs.power && `Power: ${product.specs.power}W`}
-                    {product.specs.capacity && `Capacity: ${product.specs.capacity}Wh`}
+                  <div className="mt-2 space-y-1">
+                    {Object.entries(product.specs).map(([key, value]) => (
+                      <div key={key} className="text-sm">
+                        <span className="font-medium capitalize">
+                          {key.replace('_', ' ')}:
+                        </span>
+                        {' '}
+                        {value}
+                        {key === 'power' ? 'W' : 
+                         key === 'capacity' ? 'Wh' : 
+                         key === 'voltage' ? 'V' : ''}
+                      </div>
+                    ))}
                   </div>
-                  <p className="mt-2 font-semibold">
-                    ${product.price.toFixed(2)}
-                  </p>
+                  <p className="mt-2 font-semibold">${product.price.toFixed(2)}</p>
                 </div>
                 <Button 
                   variant="outline" 
