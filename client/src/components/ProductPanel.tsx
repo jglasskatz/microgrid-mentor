@@ -22,87 +22,32 @@ interface ProductPanelProps {
 export default function ProductPanel({ selectedComponent }: ProductPanelProps) {
   const [products, setProducts] = useState<Product[]>([]);
 
-  useEffect(() => {
-    // Simulated product data - would typically come from an API
-    const allProducts: Product[] = [
-      {
-        id: "1",
-        name: "Solar Panel 400W",
-        description: "High-efficiency monocrystalline solar panel",
-        price: 299.99,
-        link: "#",
-        type: "solar",
-        specs: { power: 400, efficiency: 0.21 },
-      },
-      {
-        id: "2",
-        name: "Solar Panel 200W",
-        description: "Mid-range monocrystalline solar panel",
-        price: 159.99,
-        link: "#",
-        type: "solar",
-        specs: { power: 200, efficiency: 0.20 },
-      },
-      {
-        id: "3",
-        name: "Lithium Battery 5kWh",
-        description: "Deep cycle lithium battery for energy storage",
-        price: 3499.99,
-        link: "#",
-        type: "battery",
-        specs: { capacity: 5000, voltage: 48 },
-      },
-      {
-        id: "4",
-        name: "Battery 100Ah",
-        description: "12V deep cycle battery",
-        price: 899.99,
-        link: "#",
-        type: "battery",
-        specs: { capacity: 1200, voltage: 12 },
-      },
-      {
-        id: "5",
-        name: "LED Light Package",
-        description: "Energy-efficient LED lighting system",
-        price: 79.99,
-        link: "#",
-        type: "load",
-        specs: { power: 60, name: "Lights" },
-      },
-      {
-        id: "6",
-        name: "Energy Star Fridge",
-        description: "Energy-efficient refrigerator",
-        price: 899.99,
-        link: "#",
-        type: "load",
-        specs: { power: 500, name: "Fridge" },
-      },
-    ];
+  const searchProducts = async (type: string, specs: Record<string, number | string>) => {
+    const params = new URLSearchParams({
+      type,
+      ...specs as Record<string, string>
+    });
+    const response = await fetch(`/api/products/search?${params}`);
+    return response.json();
+  };
 
-    // Filter products based on selected component
-    if (selectedComponent) {
-      const filteredProducts = allProducts.filter(product => {
-        if (product.type !== selectedComponent.type) return false;
-        
-        // Match power specs if available
-        if (selectedComponent.specs.power && product.specs.power) {
-          return product.specs.power === selectedComponent.specs.power;
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        if (selectedComponent) {
+          const results = await searchProducts(selectedComponent.type, selectedComponent.specs);
+          setProducts(results);
+        } else {
+          const results = await fetch('/api/products/search').then(res => res.json());
+          setProducts(results);
         }
-        
-        // Match battery capacity if available
-        if (selectedComponent.specs.capacity && product.specs.capacity) {
-          return product.specs.capacity === selectedComponent.specs.capacity;
-        }
-        
-        return true;
-      });
-      
-      setProducts(filteredProducts);
-    } else {
-      setProducts(allProducts);
-    }
+      } catch (error) {
+        console.error('Failed to fetch products:', error);
+        setProducts([]);
+      }
+    };
+
+    fetchProducts();
   }, [selectedComponent]);
 
   return (
