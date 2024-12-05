@@ -48,11 +48,12 @@ export default function ProductPanel({ selectedComponent }: ProductPanelProps) {
     const fetchProducts = async () => {
       try {
         if (selectedComponent) {
+          console.log('Searching products for component:', selectedComponent);
           const results = await searchProducts(selectedComponent);
+          console.log('Search results:', results);
           setProducts(results);
         } else {
-          const results = await fetch('/api/products/search').then(res => res.json());
-          setProducts(results);
+          setProducts([]); // Clear products when no component is selected
         }
       } catch (error) {
         console.error('Failed to fetch products:', error);

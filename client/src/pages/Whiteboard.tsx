@@ -224,7 +224,10 @@ export default function Whiteboard() {
             
             <ResizablePanel defaultSize={50}>
               <Card className="h-full rounded-none border-l">
-                <ProductPanel selectedComponent={selectedComponentInstance} />
+                <ProductPanel 
+                selectedComponent={selectedComponentInstance} 
+                key={selectedComponentInstance?.id} // Force re-render on selection
+              />
               </Card>
             </ResizablePanel>
           </ResizablePanelGroup>
