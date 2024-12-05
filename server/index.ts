@@ -1,101 +1,38 @@
-import express, { type Request, Response, NextFunction } from "express";
-import { createProxyMiddleware } from 'http-proxy-middleware';
+import express from "express";
 import { setupVite, serveStatic } from "./vite";
 import { createServer } from "http";
 import { registerRoutes } from "./routes";
 
-// Create Express app
 const app = express();
+const server = createServer(app);
+const PORT = process.env.PORT || 5000;
 
 // Basic middleware
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 
-// Error handler middleware
-const errorHandler = (err: any, _req: Request, res: Response, next: NextFunction) => {
+// Register API routes
+registerRoutes(app);
+
+// Error handling middleware
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('Server Error:', err);
-  res.status(500).json({ error: 'Internal Server Error', message: err.message });
-  next(err);
-};
-
-// Create HTTP server
-const server = createServer(app);
-const PORT = process.env.PORT || 5000;
+  res.status(500).json({ error: 'Internal Server Error' });
+});
 
 // IIFE to handle async initialization
 (async () => {
   try {
-    // Configure and mount API proxy middleware first
-    const apiProxy = createProxyMiddleware({
-      target: 'http://0.0.0.0:8000',
-      changeOrigin: true,
-      pathRewrite: {
-        '^/api': '', // Remove /api prefix when forwarding
-      },
-      secure: false,
-      logLevel: 'debug',
-      onError: (err: Error, _req: Request, res: Response) => {
-        console.error('Proxy Error:', err);
-        res.status(503).json({ error: 'Service Unavailable', message: 'Backend service is not ready' });
-      },
-      onProxyReq: (proxyReq, req, _res) => {
-        console.log(`Proxying ${req.method} ${req.url} to ${proxyReq.path}`);
-      },
-      onProxyRes: (proxyRes, req, _res) => {
-        console.log(`Received ${proxyRes.statusCode} for ${req.method} ${req.url}`);
-      }
-    });
-
-    app.use('/api', apiProxy);
-
-    // Register routes
-    registerRoutes(app);
-
-    // Add error handling
-    app.use(errorHandler);
-
     // Setup Vite for development
-    if (app.get("env") === "development") {
-      console.log("Setting up Vite in development mode...");
+    if (process.env.NODE_ENV !== "production") {
       await setupVite(app, server);
     } else {
-      console.log("Setting up static serving...");
       serveStatic(app);
     }
 
-    // Initialize server with proper error handling
-    const startServer = () => {
-      return new Promise((resolve, reject) => {
-        try {
-          const httpServer = server.listen(PORT, "0.0.0.0", () => {
-            const formattedTime = new Date().toLocaleTimeString("en-US", {
-              hour: "2-digit",
-              minute: "2-digit",
-              second: "2-digit",
-              hour12: true,
-            });
-            console.log(`${formattedTime} [express] Server running at http://0.0.0.0:${PORT}`);
-            resolve(httpServer);
-          });
-
-          httpServer.on('error', (err: Error) => {
-            console.error('Failed to start server:', err);
-            reject(err);
-          });
-        } catch (error) {
-          console.error('Failed to start server:', error);
-          reject(error);
-        }
-      });
-    };
-
-    try {
-      await startServer();
-    } catch (error) {
-      console.error('Server initialization failed:', error);
-      process.exit(1);
-    }
-
+    // Start server
+    server.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server running at http://0.0.0.0:${PORT}`);
+    });
   } catch (error) {
     console.error('Server initialization failed:', error);
     process.exit(1);

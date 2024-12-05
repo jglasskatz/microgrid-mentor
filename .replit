@@ -49,11 +49,7 @@ args = "cd client && npm run dev"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "FastAPI Backend"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Frontend"
+args = "Full Stack App"
 
 [[workflows.workflow]]
 name = "Full Stack App"
@@ -67,35 +63,5 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev"
+args = "tsx watch --clear-screen=false server/index.ts"
 waitForPort = 5000
-
-[[workflows.workflow]]
-name = "FastAPI Backend"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload --log-level debug"
-waitForPort = 8000
-
-[[workflows.workflow]]
-name = "Frontend"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd client && npm run dev"
-waitForPort = 5173
