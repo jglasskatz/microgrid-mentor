@@ -47,6 +47,10 @@ args = "Full Stack App"
 task = "workflow.run"
 args = "FastAPI Backend"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Frontend"
+
 [[workflows.workflow]]
 name = "Full Stack App"
 author = "agent"
@@ -76,3 +80,18 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload --log-level debug"
 waitForPort = 8000
+
+[[workflows.workflow]]
+name = "Frontend"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd client && npm install && npm run dev"
+waitForPort = 5173

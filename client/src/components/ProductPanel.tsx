@@ -41,7 +41,10 @@ export default function ProductPanel({ selectedComponent }: ProductPanelProps) {
     };
 
     const params = new URLSearchParams(searchParams);
-    const response = await fetch(`/api/products/search?${params}`);
+    const response = await fetch(`/products/search?${params}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch products');
+    }
     return response.json();
   };
 

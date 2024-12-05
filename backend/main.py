@@ -95,7 +95,7 @@ products = [
     }
 ]
 
-@app.post("/api/designs", response_model=schemas.Design)
+@app.post("/designs", response_model=schemas.Design)
 def create_design(design: schemas.DesignCreate, db: Session = Depends(get_db)):
     db_design = models.Design(**design.dict())
     db.add(db_design)
@@ -103,18 +103,18 @@ def create_design(design: schemas.DesignCreate, db: Session = Depends(get_db)):
     db.refresh(db_design)
     return db_design
 
-@app.get("/api/designs", response_model=List[schemas.Design])
+@app.get("/designs", response_model=List[schemas.Design])
 def get_designs(db: Session = Depends(get_db)):
     return db.query(models.Design).order_by(models.Design.created_at.desc()).all()
 
-@app.get("/api/designs/{design_id}", response_model=schemas.Design)
+@app.get("/designs/{design_id}", response_model=schemas.Design)
 def get_design(design_id: int, db: Session = Depends(get_db)):
     db_design = db.query(models.Design).filter(models.Design.id == design_id).first()
     if db_design is None:
         raise HTTPException(status_code=404, detail="Design not found")
     return db_design
 
-@app.get("/api/products/search")
+@app.get("/products/search")
 async def search_products(
     type: str = None,
     power_min: float = None,
@@ -166,7 +166,7 @@ def _check_spec_match(product_specs, key, value):
         return spec_value <= float(value)
     return str(product_specs.get(key)) == str(value)
 
-@app.get("/api/products/{product_id}")
+@app.get("/products/{product_id}")
 def get_product(product_id: str):
     product = next((p for p in products if p["id"] == product_id), None)
     if not product:
