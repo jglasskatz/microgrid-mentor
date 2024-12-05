@@ -24,28 +24,34 @@ export default function ProductPanel({ selectedComponent }: ProductPanelProps) {
   const [products, setProducts] = useState<Product[]>([]);
 
   const searchProducts = async (component: ComponentInstance) => {
-    // Create search criteria based on component specs
-    const searchParams = {
-      type: component.type,
-      ...Object.entries(component.specs).reduce((acc, [key, value]) => {
-        if (typeof value === 'number') {
-          // Create range of ±15% for better matches
-          const range = value * 0.15;
-          acc[`${key}_min`] = value - range;
-          acc[`${key}_max`] = value + range;
-        } else {
-          acc[key] = value;
-        }
-        return acc;
-      }, {}),
-    };
+    try {
+      // Create search criteria based on component specs
+      const searchParams = {
+        type: component.type,
+        ...Object.entries(component.specs).reduce((acc, [key, value]) => {
+          if (typeof value === 'number') {
+            // Create range of ±15% for better matches
+            const range = value * 0.15;
+            acc[`${key}_min`] = value - range;
+            acc[`${key}_max`] = value + range;
+          } else {
+            acc[key] = value;
+          }
+          return acc;
+        }, {} as Record<string, any>),
+      };
 
-    const params = new URLSearchParams(searchParams);
-    const response = await fetch(`/products/search?${params}`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch products');
+      const params = new URLSearchParams(searchParams);
+      const response = await fetch(`/api/products/search?${params}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch products');
+      }
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      return [];
     }
-    return response.json();
   };
 
   useEffect(() => {

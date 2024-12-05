@@ -7,12 +7,16 @@ import { Toaster } from "@/components/ui/toaster";
 import Whiteboard from "./pages/Whiteboard";
 import ProductDetails from "./pages/ProductDetails";
 
-// Configure SWR to use the FastAPI backend
+// Configure SWR with error handling and retries
 const fetcher = (url: string) => {
-  const baseUrl = "http://localhost:8000";
-  const fullUrl = url.startsWith("/") ? `${baseUrl}${url}` : `${baseUrl}/${url}`;
-  return fetch(fullUrl).then(r => {
-    if (!r.ok) throw new Error('API request failed');
+  return fetch(url).then(async (r) => {
+    if (!r.ok) {
+      const error = new Error('API request failed');
+      const data = await r.json().catch(() => ({}));
+      (error as any).status = r.status;
+      (error as any).info = data;
+      throw error;
+    }
     return r.json();
   });
 };
