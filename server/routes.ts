@@ -107,28 +107,43 @@ export function registerRoutes(app: Express) {
   app.get("/api/products/search", (req, res) => {
     try {
       const { type, ...specs } = req.query;
+      console.log('Search request:', { type, specs });
       
       let filteredProducts = products;
       
       if (type) {
         filteredProducts = filteredProducts.filter(p => p.type === type);
+        console.log('After type filter:', filteredProducts.length, 'products');
       }
       
-      // Handle range-based search
-      filteredProducts = filteredProducts.filter(product => {
-        return Object.entries(specs).every(([key, value]) => {
-          if (key.endsWith('_min')) {
-            const baseKey = key.replace('_min', '');
-            return product.specs[baseKey] >= Number(value);
-          }
-          if (key.endsWith('_max')) {
-            const baseKey = key.replace('_max', '');
-            return product.specs[baseKey] <= Number(value);
-          }
-          return product.specs[key]?.toString() === value?.toString();
+      // Only apply specs filter if there are specs
+      if (Object.keys(specs).length > 0) {
+        filteredProducts = filteredProducts.filter(product => {
+          return Object.entries(specs).every(([key, value]) => {
+            console.log('Checking spec:', key, value, 'for product:', product.name);
+            
+            if (key.endsWith('_min')) {
+              const baseKey = key.replace('_min', '');
+              const specValue = Number(product.specs[baseKey]);
+              const minValue = Number(value);
+              console.log('Min check:', baseKey, specValue, '>=', minValue);
+              return !isNaN(specValue) && !isNaN(minValue) && specValue >= minValue;
+            }
+            if (key.endsWith('_max')) {
+              const baseKey = key.replace('_max', '');
+              const specValue = Number(product.specs[baseKey]);
+              const maxValue = Number(value);
+              console.log('Max check:', baseKey, specValue, '<=', maxValue);
+              return !isNaN(specValue) && !isNaN(maxValue) && specValue <= maxValue;
+            }
+            // For exact matches
+            return product.specs[key]?.toString() === value?.toString();
+          });
         });
-      });
+        console.log('After specs filter:', filteredProducts.length, 'products');
+      }
       
+      console.log('Final results:', filteredProducts);
       res.json(filteredProducts);
     } catch (error) {
       console.error("Product search error:", error);
