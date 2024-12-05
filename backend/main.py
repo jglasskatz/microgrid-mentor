@@ -53,7 +53,46 @@ products = [
         "type": "solar",
         "specs": {"power": 400, "efficiency": 0.21},
     },
-    # ... other products ...
+    {
+        "id": "2",
+        "name": "Solar Panel 200W",
+        "description": "Mid-range monocrystalline solar panel",
+        "price": 159.99,
+        "type": "solar",
+        "specs": {"power": 200, "efficiency": 0.20},
+    },
+    {
+        "id": "3",
+        "name": "Lithium Battery 5kWh",
+        "description": "Deep cycle lithium battery for energy storage",
+        "price": 3499.99,
+        "type": "battery",
+        "specs": {"capacity": 5000, "voltage": 48},
+    },
+    {
+        "id": "4",
+        "name": "Battery 100Ah",
+        "description": "12V deep cycle battery",
+        "price": 899.99,
+        "type": "battery",
+        "specs": {"capacity": 1200, "voltage": 12},
+    },
+    {
+        "id": "5",
+        "name": "LED Light Package",
+        "description": "Energy-efficient LED lighting system",
+        "price": 79.99,
+        "type": "load",
+        "specs": {"power": 60, "name": "Lights"},
+    },
+    {
+        "id": "6",
+        "name": "Energy Star Fridge",
+        "description": "Energy-efficient refrigerator",
+        "price": 899.99,
+        "type": "load",
+        "specs": {"power": 500, "name": "Fridge"},
+    }
 ]
 
 @app.post("/api/designs", response_model=schemas.Design)
