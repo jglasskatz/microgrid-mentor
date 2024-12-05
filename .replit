@@ -15,10 +15,6 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 5173
-externalPort = 5173
-
-[[ports]]
 localPort = 8000
 externalPort = 8000
 
@@ -44,12 +40,12 @@ mode = "parallel"
 author = "agent"
 
 [[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd client && npm run dev"
+task = "workflow.run"
+args = "Full Stack App"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Full Stack App"
+args = "FastAPI Backend"
 
 [[workflows.workflow]]
 name = "Full Stack App"
@@ -63,5 +59,20 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "tsx watch --clear-screen=false server/index.ts"
+args = "npm run dev"
 waitForPort = 5000
+
+[[workflows.workflow]]
+name = "FastAPI Backend"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload --log-level debug"
+waitForPort = 8000
