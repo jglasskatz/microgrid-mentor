@@ -128,18 +128,21 @@ async def search_products(
     voltage_min: float = None,
     voltage_max: float = None,
 ):
+    logger.info(f"Search request - type: {type}, specs: {locals()}")
     filtered_products = products
+    
     if type:
         filtered_products = [p for p in filtered_products if p["type"] == type]
+        logger.info(f"After type filter: {len(filtered_products)} products")
     
     # Filter by specs ranges if provided
-    specs_filters = {
+    specs_filters = [
         ('power', power_min, power_max),
         ('efficiency', efficiency_min, efficiency_max),
         ('area', area_min, area_max),
         ('capacity', capacity_min, capacity_max),
         ('voltage', voltage_min, voltage_max),
-    }
+    ]
     
     for spec_name, min_val, max_val in specs_filters:
         if min_val is not None:
@@ -153,7 +156,8 @@ async def search_products(
                 if spec_name in p["specs"] and float(p["specs"][spec_name]) <= max_val
             ]
     
-    return filtered_products
+    logger.info(f"Final results: {filtered_products}")
+    return {"products": filtered_products}
 
 def _check_spec_match(product_specs, key, value):
     if key.endswith('_min'):
