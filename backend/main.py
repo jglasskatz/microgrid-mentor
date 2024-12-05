@@ -18,7 +18,12 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Create FastAPI app
-app = FastAPI(title="Microgrid API")
+app = FastAPI(title="Microgrid API", docs_url="/docs", redoc_url="/redoc")
+
+# Root endpoint
+@app.get("/")
+def read_root():
+    return {"message": "Microgrid API is running"}
 
 try:
     # Create database tables
