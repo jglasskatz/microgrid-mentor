@@ -56,24 +56,45 @@ const PORT = process.env.PORT || 5000;
 
     // Setup Vite for development
     if (app.get("env") === "development") {
+      console.log("Setting up Vite in development mode...");
       await setupVite(app, server);
     } else {
+      console.log("Setting up static serving...");
       serveStatic(app);
     }
 
-    // Start the server
-    server.listen(PORT, "0.0.0.0", () => {
-      const formattedTime = new Date().toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: true,
+    // Initialize server with proper error handling
+    const startServer = () => {
+      return new Promise((resolve, reject) => {
+        try {
+          const httpServer = server.listen(PORT, "0.0.0.0", () => {
+            const formattedTime = new Date().toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+              hour12: true,
+            });
+            console.log(`${formattedTime} [express] Server running at http://0.0.0.0:${PORT}`);
+            resolve(httpServer);
+          });
+
+          httpServer.on('error', (err: Error) => {
+            console.error('Failed to start server:', err);
+            reject(err);
+          });
+        } catch (error) {
+          console.error('Failed to start server:', error);
+          reject(error);
+        }
       });
-      console.log(`${formattedTime} [express] Server running at http://0.0.0.0:${PORT}`);
-    }).on('error', (err: Error) => {
-      console.error('Failed to start server:', err);
+    };
+
+    try {
+      await startServer();
+    } catch (error) {
+      console.error('Server initialization failed:', error);
       process.exit(1);
-    });
+    }
 
   } catch (error) {
     console.error('Server initialization failed:', error);
