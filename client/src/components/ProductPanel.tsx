@@ -4,7 +4,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
 import { ComponentInstance } from "@/lib/components";
-import { Link } from "wouter";
 
 interface Product {
   id: string;
@@ -49,8 +48,10 @@ export default function ProductPanel({ selectedComponent }: ProductPanelProps) {
     const fetchProducts = async () => {
       try {
         if (selectedComponent) {
+          console.log('Searching products for component:', selectedComponent);
           const results = await searchProducts(selectedComponent);
-          setProducts(Array.isArray(results) ? results : []);
+          console.log('Search results:', results);
+          setProducts(results);
         } else {
           setProducts([]); // Clear products when no component is selected
         }
@@ -60,10 +61,7 @@ export default function ProductPanel({ selectedComponent }: ProductPanelProps) {
       }
     };
 
-    // Only fetch products if we have a selected component
-    if (selectedComponent) {
-      fetchProducts();
-    }
+    fetchProducts();
   }, [selectedComponent]);
 
   return (
@@ -104,11 +102,8 @@ export default function ProductPanel({ selectedComponent }: ProductPanelProps) {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    // Show details in the panel instead of navigating
-                    window.open(`/products/${product.id}`, '_blank');
+                  onClick={() => {
+                    window.location.href = `/products/${product.id}`;
                   }}
                 >
                   <ExternalLink className="h-4 w-4 mr-2" />

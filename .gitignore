@@ -1,26 +1,20 @@
-# Dependencies
+# Node.js
 node_modules/
-.pythonlibs/
-__pycache__/
-*.pyc
-
-# Build files
 dist/
-build/
-out/
-server/public/
 .cache/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # Environment variables
 .env
 .env.*
 !.env.example
 
-# Logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# System Files
+.DS_Store
+Thumbs.db
 
 # Editor directories and files
 .vscode/
@@ -30,24 +24,14 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw?
-.DS_Store
-Thumbs.db
 
-# Temporary files
-*.swp
-*.swo
-*.tmp
-*.temp
-*.bak
+# Build files
+build/
+out/
+server/public/
+vite.config.ts.*
+*.tar.gz
 
 # Database
 *.sqlite
 *.sqlite3
-
-# Replit specific
-.upm/
-.config/
-.replit
-replit.nix
-vite.config.ts.*
-*.tar.gz

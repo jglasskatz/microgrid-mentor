@@ -133,24 +133,12 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           if (clickedComponent) {
             if (!connectionStart) {
               setConnectionStart(clickedComponent);
-              toast({
-                title: "Connection Started",
-                description: "Click another component to connect",
-              });
             } else if (connectionStart.id !== clickedComponent.id) {
               onConnectionCreate(connectionStart.id, clickedComponent.id);
               setConnectionStart(null);
-              setIsConnectionMode(false);
-              toast({
-                title: "Connection Complete",
-                description: "Components connected successfully",
-              });
             }
           }
-          // Prevent any other interactions while in connection mode
-          e.preventDefault();
-          e.stopPropagation();
-          return;
+          return; // Add this to prevent other handlers from interfering
         }
         
         if (isEraserMode && clickedComponent) {
@@ -166,9 +154,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           return;
         }
         
-        if (clickedComponent && !isConnectionMode) {
-          e.preventDefault(); // Prevent any default navigation
-          e.stopPropagation(); // Stop event bubbling
+        if (clickedComponent) {
           setSelectedComponentInstance(clickedComponent);
           onSelectComponent(clickedComponent);
           setIsDragging(true);
