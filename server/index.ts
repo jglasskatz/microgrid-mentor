@@ -1,5 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
+import { createProxyMiddleware } from 'http-proxy-middleware';
 import { setupVite, serveStatic } from "./vite";
 import { createServer } from "http";
 
@@ -8,7 +8,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 (async () => {
-  registerRoutes(app);
+  // Proxy API requests to FastAPI backend
+  app.use('/api', createProxyMiddleware({
+    target: 'http://localhost:8000',
+    changeOrigin: true,
+    pathRewrite: {
+      '^/api': '/api'
+    },
+    onError: (err: Error, _req: Request, res: Response) => {
+      console.error('Proxy Error:', err);
+      res.status(500).json({ error: 'Proxy Error', message: err.message });
+    }
+  }));
+
   const server = createServer(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
