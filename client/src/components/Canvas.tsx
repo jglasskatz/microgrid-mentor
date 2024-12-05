@@ -167,6 +167,8 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         }
         
         if (clickedComponent && !isConnectionMode) {
+          e.preventDefault(); // Prevent any default navigation
+          e.stopPropagation(); // Stop event bubbling
           setSelectedComponentInstance(clickedComponent);
           onSelectComponent(clickedComponent);
           setIsDragging(true);

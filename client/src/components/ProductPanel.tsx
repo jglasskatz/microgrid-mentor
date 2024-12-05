@@ -49,9 +49,7 @@ export default function ProductPanel({ selectedComponent }: ProductPanelProps) {
     const fetchProducts = async () => {
       try {
         if (selectedComponent) {
-          console.log('Searching products for component:', selectedComponent);
           const results = await searchProducts(selectedComponent);
-          console.log('Search results:', results);
           setProducts(results);
         } else {
           setProducts([]); // Clear products when no component is selected
@@ -62,7 +60,10 @@ export default function ProductPanel({ selectedComponent }: ProductPanelProps) {
       }
     };
 
-    fetchProducts();
+    // Only fetch products if we have a selected component
+    if (selectedComponent) {
+      fetchProducts();
+    }
   }, [selectedComponent]);
 
   return (
