@@ -50,7 +50,7 @@ export default function ProductPanel({ selectedComponent }: ProductPanelProps) {
       try {
         if (selectedComponent) {
           const results = await searchProducts(selectedComponent);
-          setProducts(results);
+          setProducts(Array.isArray(results) ? results : []);
         } else {
           setProducts([]); // Clear products when no component is selected
         }
@@ -104,12 +104,15 @@ export default function ProductPanel({ selectedComponent }: ProductPanelProps) {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  asChild
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Show details in the panel instead of navigating
+                    window.open(`/products/${product.id}`, '_blank');
+                  }}
                 >
-                  <Link href={`/products/${product.id}`}>
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    View Details
-                  </Link>
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  View Details
                 </Button>
               </div>
             </Card>
