@@ -25,7 +25,7 @@ export default function DesignManager({ currentComponents, onLoadDesign }: Desig
   const [isOpen, setIsOpen] = useState(false);
   const [newDesignName, setNewDesignName] = useState("");
   const { toast } = useToast();
-  const { data: designs, mutate } = useSWR<Design[]>("/designs");
+  const { data: designs, mutate } = useSWR<Design[]>("/api/designs");
 
   const handleSaveDesign = async () => {
     if (!newDesignName.trim()) {
@@ -38,7 +38,7 @@ export default function DesignManager({ currentComponents, onLoadDesign }: Desig
     }
 
     try {
-      await fetch("/designs", {
+      await fetch("/api/designs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

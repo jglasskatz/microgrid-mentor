@@ -8,7 +8,7 @@ channel = "stable-24_05"
 [deployment]
 deploymentTarget = "cloudrun"
 build = ["npm", "run", "build"]
-run = ["sh", "-c", "npm run dev"]
+run = ["npm", "run", "start"]
 
 [[ports]]
 localPort = 5000
@@ -41,10 +41,14 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "MicrogridMentor"
+args = "Full Stack App"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "FastAPI Backend"
 
 [[workflows.workflow]]
-name = "MicrogridMentor"
+name = "Full Stack App"
 author = "agent"
 
 [workflows.workflow.metadata]
@@ -57,3 +61,18 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
+
+[[workflows.workflow]]
+name = "FastAPI Backend"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload --log-level debug"
+waitForPort = 8000

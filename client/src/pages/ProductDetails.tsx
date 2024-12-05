@@ -7,7 +7,7 @@ import { Link } from "wouter";
 
 export default function ProductDetails() {
   const params = useParams();
-  const { data: product } = useSWR(`/products/${params.id}`);
+  const { data: product } = useSWR(`/api/products/${params.id}`);
   
   return (
     <div className="p-4 max-w-4xl mx-auto">
