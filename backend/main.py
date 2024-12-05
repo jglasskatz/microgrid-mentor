@@ -115,19 +115,43 @@ def get_design(design_id: int, db: Session = Depends(get_db)):
     return db_design
 
 @app.get("/api/products/search")
-def search_products(type: str = None, **specs):
+async def search_products(
+    type: str = None,
+    power_min: float = None,
+    power_max: float = None,
+    efficiency_min: float = None,
+    efficiency_max: float = None,
+    area_min: float = None,
+    area_max: float = None,
+    capacity_min: float = None,
+    capacity_max: float = None,
+    voltage_min: float = None,
+    voltage_max: float = None,
+):
     filtered_products = products
     if type:
         filtered_products = [p for p in filtered_products if p["type"] == type]
     
-    if specs:
-        filtered_products = [
-            product for product in filtered_products
-            if all(
-                _check_spec_match(product["specs"], key, value)
-                for key, value in specs.items()
-            )
-        ]
+    # Filter by specs ranges if provided
+    specs_filters = {
+        ('power', power_min, power_max),
+        ('efficiency', efficiency_min, efficiency_max),
+        ('area', area_min, area_max),
+        ('capacity', capacity_min, capacity_max),
+        ('voltage', voltage_min, voltage_max),
+    }
+    
+    for spec_name, min_val, max_val in specs_filters:
+        if min_val is not None:
+            filtered_products = [
+                p for p in filtered_products
+                if spec_name in p["specs"] and float(p["specs"][spec_name]) >= min_val
+            ]
+        if max_val is not None:
+            filtered_products = [
+                p for p in filtered_products
+                if spec_name in p["specs"] and float(p["specs"][spec_name]) <= max_val
+            ]
     
     return filtered_products
 

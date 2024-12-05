@@ -4,6 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
 import { ComponentInstance } from "@/lib/components";
+import { Link } from "wouter";
 
 interface Product {
   id: string;
@@ -102,12 +103,12 @@ export default function ProductPanel({ selectedComponent }: ProductPanelProps) {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={() => {
-                    window.location.href = `/products/${product.id}`;
-                  }}
+                  asChild
                 >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  View Details
+                  <Link href={`/products/${product.id}`}>
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    View Details
+                  </Link>
                 </Button>
               </div>
             </Card>
