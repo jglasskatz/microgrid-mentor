@@ -35,3 +35,8 @@ vite.config.ts.*
 # Database
 *.sqlite
 *.sqlite3
+.replit
+replit.nix
+
+# TypeScript
+*.tsbuildinfo

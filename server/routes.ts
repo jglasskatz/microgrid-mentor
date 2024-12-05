@@ -2,59 +2,9 @@ import type { Express } from "express";
 import { handleAICoach } from "./ai-coach";
 import { db } from "db";
 import { designs } from "db/schema";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, and, ne } from "drizzle-orm";
 
-// Sample product data - in a real app, this would come from a database
-const products = [
-  {
-    id: "1",
-    name: "Solar Panel 400W",
-    description: "High-efficiency monocrystalline solar panel",
-    price: 299.99,
-    type: "solar",
-    specs: { power: 400, efficiency: 0.21 },
-  },
-  {
-    id: "2",
-    name: "Solar Panel 200W",
-    description: "Mid-range monocrystalline solar panel",
-    price: 159.99,
-    type: "solar",
-    specs: { power: 200, efficiency: 0.20 },
-  },
-  {
-    id: "3",
-    name: "Lithium Battery 5kWh",
-    description: "Deep cycle lithium battery for energy storage",
-    price: 3499.99,
-    type: "battery",
-    specs: { capacity: 5000, voltage: 48 },
-  },
-  {
-    id: "4",
-    name: "Battery 100Ah",
-    description: "12V deep cycle battery",
-    price: 899.99,
-    type: "battery",
-    specs: { capacity: 1200, voltage: 12 },
-  },
-  {
-    id: "5",
-    name: "LED Light Package",
-    description: "Energy-efficient LED lighting system",
-    price: 79.99,
-    type: "load",
-    specs: { power: 60, name: "Lights" },
-  },
-  {
-    id: "6",
-    name: "Energy Star Fridge",
-    description: "Energy-efficient refrigerator",
-    price: 899.99,
-    type: "load",
-    specs: { power: 500, name: "Fridge" },
-  },
-];
+import { products } from "db/schema";
 
 export function registerRoutes(app: Express) {
   app.post("/api/ai-coach", handleAICoach);
@@ -104,46 +54,41 @@ export function registerRoutes(app: Express) {
   });
 
   // Product search endpoint
-  app.get("/api/products/search", (req, res) => {
+  app.get("/api/products/search", async (req, res) => {
     try {
       const { type, ...specs } = req.query;
       console.log('Search request:', { type, specs });
       
-      let filteredProducts = products;
+      let query = db.select().from(products);
       
       if (type) {
-        filteredProducts = filteredProducts.filter(p => p.type === type);
-        console.log('After type filter:', filteredProducts.length, 'products');
+        query = query.where(eq(products.type, type.toString()));
       }
+      
+      const results = await query;
+      let filteredProducts = results;
       
       // Only apply specs filter if there are specs
       if (Object.keys(specs).length > 0) {
-        filteredProducts = filteredProducts.filter(product => {
+        filteredProducts = results.filter(product => {
           return Object.entries(specs).every(([key, value]) => {
-            console.log('Checking spec:', key, value, 'for product:', product.name);
-            
             if (key.endsWith('_min')) {
               const baseKey = key.replace('_min', '');
               const specValue = Number(product.specs[baseKey]);
               const minValue = Number(value);
-              console.log('Min check:', baseKey, specValue, '>=', minValue);
               return !isNaN(specValue) && !isNaN(minValue) && specValue >= minValue;
             }
             if (key.endsWith('_max')) {
               const baseKey = key.replace('_max', '');
               const specValue = Number(product.specs[baseKey]);
               const maxValue = Number(value);
-              console.log('Max check:', baseKey, specValue, '<=', maxValue);
               return !isNaN(specValue) && !isNaN(maxValue) && specValue <= maxValue;
             }
-            // For exact matches
             return product.specs[key]?.toString() === value?.toString();
           });
         });
-        console.log('After specs filter:', filteredProducts.length, 'products');
       }
       
-      console.log('Final results:', filteredProducts);
       res.json(filteredProducts);
     } catch (error) {
       console.error("Product search error:", error);
@@ -152,18 +97,23 @@ export function registerRoutes(app: Express) {
   });
 
   // Single product endpoint
-  app.get("/api/products/:id", (req, res) => {
+  app.get("/api/products/:id", async (req, res) => {
     try {
-      const product = products.find(p => p.id === req.params.id);
+      const product = await db.query.products.findFirst({
+        where: eq(products.id, parseInt(req.params.id)),
+      });
       
       if (!product) {
         return res.status(404).json({ error: "Product not found" });
       }
       
       // Find alternative products of the same type
-      const alternatives = products.filter(p => 
-        p.type === product.type && p.id !== product.id
-      );
+      const alternatives = await db.select()
+        .from(products)
+        .where(and(
+          eq(products.type, product.type),
+          ne(products.id, product.id)
+        ));
       
       res.json({
         ...product,
